@@ -15,8 +15,6 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      HAS_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -33,11 +31,12 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - name: Publish
-        if: env.HAS_TOKEN == 'true'
-        run: npm publish --provenance --access public
+      - name: Publish (only if NPM_TOKEN is configured)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: No token configured
-        if: env.HAS_TOKEN != 'true'
-        run: echo "NPM_TOKEN secret is not set: nothing was published."
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "NPM_TOKEN secret is not set: nothing was published."
+          else
+            npm publish --provenance --access public
+          fi
