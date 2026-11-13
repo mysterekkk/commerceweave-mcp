@@ -1,0 +1,74 @@
+{
+  "name": "commerceweave-mcp",
+  "version": "0.1.0",
+  "description": "One MCP server. Three commerce platforms. Connect AI agents to Allegro, Base.com and WooCommerce through one secure, local MCP server.",
+  "type": "module",
+  "license": "MIT",
+  "author": "LuroWeb",
+  "mcpName": "io.github.mysterekkk/commerceweave-mcp",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mysterekkk/commerceweave-mcp.git"
+  },
+  "homepage": "https://github.com/mysterekkk/commerceweave-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/mysterekkk/commerceweave-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "ecommerce",
+    "allegro",
+    "baselinker",
+    "woocommerce",
+    "ai-agents",
+    "claude"
+  ],
+  "bin": {
+    "commerceweave-mcp": "dist/index.js"
+  },
+  "main": "dist/lib.js",
+  "types": "dist/lib.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/lib.d.ts",
+      "default": "./dist/lib.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "README.pl.md",
+    "LICENSE",
+    "SECURITY.md",
+    "CHANGELOG.md",
+    "examples",
+    "assets/logo.svg",
+    ".env.example",
+    "server.json"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/postbuild.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.4.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "^2.4.0",
+    "@types/node": "^22.20.5",
+    "eslint": "^9.39.5",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^3.2.7"
+  }
+}
