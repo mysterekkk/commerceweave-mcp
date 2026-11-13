@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="200" viewBox="0 0 860 200" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="Approval flow">
+  <rect width="860" height="200" rx="16" fill="#0b1530"/>
+  <g fill="#e6edf7" font-size="13" text-anchor="middle">
+    <rect x="20" y="50" width="150" height="80" rx="10" fill="#13244a" stroke="#2dd4bf"/><text x="95" y="82" font-weight="700">1 Model</text><text x="95" y="102" fill="#9fb0d0" font-size="12">commerce_prepare_*</text>
+    <rect x="200" y="50" width="150" height="80" rx="10" fill="#13244a"/><text x="275" y="82" font-weight="700">2 Plan saved</text><text x="275" y="102" fill="#9fb0d0" font-size="12">before/after + hash</text>
+    <rect x="380" y="50" width="150" height="80" rx="10" fill="#13244a" stroke="#8b5cf6"/><text x="455" y="82" font-weight="700">3 Human</text><text x="455" y="102" fill="#9fb0d0" font-size="12">terminal: approve cw_…</text>
+    <rect x="560" y="50" width="130" height="80" rx="10" fill="#13244a"/><text x="625" y="82" font-weight="700">4 Execute</text><text x="625" y="102" fill="#9fb0d0" font-size="12">re-read, abort on drift</text>
+    <rect x="720" y="50" width="120" height="80" rx="10" fill="#13244a" stroke="#2dd4bf"/><text x="780" y="82" font-weight="700">5 Verify</text><text x="780" y="102" fill="#9fb0d0" font-size="12">read back + audit</text>
+  </g>
+  <g stroke="#2dd4bf" stroke-width="2" fill="none"><path d="M170 90 H200"/><path d="M350 90 H380"/><path d="M530 90 H560"/><path d="M690 90 H720"/></g>
+  <text x="430" y="170" fill="#9fb0d0" font-size="12" text-anchor="middle">No tool can approve. Approval is single-use, expires, and is bound to the exact plan.</text>
+</svg>

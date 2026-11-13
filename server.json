@@ -1,0 +1,32 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.mysterekkk/commerceweave-mcp",
+  "title": "CommerceWeave MCP",
+  "description": "One local MCP server for Allegro, Base.com and WooCommerce: read-only by default, human-approved writes.",
+  "websiteUrl": "https://github.com/mysterekkk/commerceweave-mcp",
+  "repository": { "url": "https://github.com/mysterekkk/commerceweave-mcp", "source": "github" },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "commerceweave-mcp",
+      "version": "0.1.0",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        { "name": "COMMERCEWEAVE_MODE", "description": "read_only (default) | proposal | approval_required", "isRequired": false, "default": "read_only" },
+        { "name": "COMMERCEWEAVE_DEMO", "description": "true = synthetic demo data, no credentials needed", "isRequired": false, "default": "false" },
+        { "name": "ALLEGRO_ENABLED", "description": "true to enable the Allegro connection", "isRequired": false },
+        { "name": "ALLEGRO_ENVIRONMENT", "description": "sandbox | production", "isRequired": false, "default": "sandbox" },
+        { "name": "ALLEGRO_CLIENT_ID", "description": "Allegro application client id", "isRequired": false },
+        { "name": "ALLEGRO_CLIENT_SECRET", "description": "Allegro application client secret", "isRequired": false, "isSecret": true },
+        { "name": "BASE_ENABLED", "description": "true to enable the Base.com connection", "isRequired": false },
+        { "name": "BASE_API_TOKEN", "description": "Base.com API token (sent as X-BLToken)", "isRequired": false, "isSecret": true },
+        { "name": "WOO_ENABLED", "description": "true to enable the WooCommerce connection", "isRequired": false },
+        { "name": "WOO_STORE_URL", "description": "https URL of the WooCommerce store", "isRequired": false },
+        { "name": "WOO_CONSUMER_KEY", "description": "WooCommerce REST API consumer key", "isRequired": false, "isSecret": true },
+        { "name": "WOO_CONSUMER_SECRET", "description": "WooCommerce REST API consumer secret", "isRequired": false, "isSecret": true }
+      ]
+    }
+  ]
+}

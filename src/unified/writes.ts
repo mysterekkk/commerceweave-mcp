@@ -86,7 +86,8 @@ export class Writes {
       before.warnings?.forEach((w) => warnings.push(`${it.productId}: ${w}`));
       const cur = before.currency ?? null;
       const op: WriteOperation = { kind: 'price', productId: it.productId, variantId: it.variantId, catalogId: it.catalogId, priceGroup: it.priceGroup, amount: after, currency: cur };
-      const diff = before.value !== '' ? formatDecimal(next - parseDecimal(before.value), 2) : 'n/a';
+      const delta = before.value !== '' ? next - parseDecimal(before.value) : undefined;
+      const diff = delta === undefined ? 'n/a' : `${delta >= 0n ? '+' : ''}${formatDecimal(delta, 2)}`;
       changes.push({ op, before, expectedAfter: after, label: `${it.productId}${it.variantId ? '/' + it.variantId : ''} — ${before.description}`, beforeDisplay: `${before.value ? normalizeMoney(before.value) : '(none)'} ${cur ?? '(currency not reported)'}`, afterDisplay: `${after} ${cur ?? ''} (${diff})`.trim() });
     }
     return this.finish(c, `Change price on ${changes.length} item(s) in ${c.id}`, changes, warnings);
@@ -110,25 +111,33 @@ export class Writes {
     if (p.status !== 'pending') throw new CommerceError('APPROVAL_INVALID', `Proposal ${p.id} is already ${p.status}; approvals are single-use.`);
     if (Date.parse(p.expiresAt) < Date.now()) throw new CommerceError('APPROVAL_INVALID', `Proposal ${p.id} expired at ${p.expiresAt}.`);
     this.store.verifyApproval(p);
+    // Claim the single-use approval and persist "executing" BEFORE any await: concurrent calls lose the race here,
+    // and a crash can never replay the plan.
+    this.store.claimApproval(p.id);
+    p.status = 'executing';
+    this.store.save(p);
+    this.store.audit({ event: 'execute_start', proposalId: p.id, connectionId: p.connectionId, changes: p.changes.length });
+
+    const abort = (message: string, code: 'STALE_PROPOSAL' | 'MODE_FORBIDS' | 'APPROVAL_INVALID', label = 'precheck'): never => {
+      p.status = 'failed';
+      p.result = { at: new Date().toISOString(), outcomes: [{ label, ok: false, detail: message }] };
+      this.store.save(p);
+      this.store.audit({ event: 'execute_aborted', proposalId: p.id, code });
+      throw new CommerceError(code, message, { connectionId: p.connectionId });
+    };
     const c = this.reg.get(p.connectionId);
-    if (p.platform !== c.platform) throw new CommerceError('APPROVAL_INVALID', 'Connection platform changed since the proposal was created.');
-    if (!c.writable) throw new CommerceError('MODE_FORBIDS', `Connection ${c.id} is read-only.`);
+    if (p.platform !== c.platform) abort('Connection platform changed since the proposal was created.', 'APPROVAL_INVALID');
+    if (!c.writable) abort(`Connection ${c.id} is read-only.`, 'MODE_FORBIDS');
 
     // Re-read everything BEFORE touching anything: abort on any drift.
     const fresh: CurrentState[] = [];
     for (const ch of p.changes) {
       const now = await c.readCurrent(ch.op, signal);
       if (!sameValue(now.value, ch.before.value)) {
-        throw new CommerceError('STALE_PROPOSAL', `State changed since the proposal was created for "${ch.label}": was ${ch.before.value}, now ${now.value}. Nothing was executed; create a new proposal.`, { connectionId: c.id });
+        abort(`State changed since the proposal was created for "${ch.label}": was ${ch.before.value}, now ${now.value}. Nothing was executed; the approval is spent, create a new proposal.`, 'STALE_PROPOSAL', ch.label);
       }
       fresh.push(now);
     }
-
-    // Single use: burn the approval and mark the proposal before the first write, so a crash can never replay it.
-    this.store.consumeApproval(p.id);
-    p.status = 'executing';
-    this.store.save(p);
-    this.store.audit({ event: 'execute_start', proposalId: p.id, connectionId: c.id, changes: p.changes.length });
 
     const outcomes: Array<{ label: string; ok: boolean; detail: string }> = [];
     let failed = false;

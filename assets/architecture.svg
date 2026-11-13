@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="330" viewBox="0 0 860 330" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="CommerceWeave architecture">
+  <rect width="860" height="330" rx="16" fill="#0b1530"/>
+  <g fill="#e6edf7" font-size="14" text-anchor="middle">
+    <rect x="24" y="116" width="150" height="88" rx="12" fill="#13244a" stroke="#2dd4bf"/><text x="99" y="152" font-weight="700">AI client</text><text x="99" y="174" fill="#9fb0d0" font-size="12">Claude Code / Desktop</text><text x="99" y="190" fill="#9fb0d0" font-size="12">Cursor / any MCP client</text>
+    <rect x="236" y="40" width="388" height="250" rx="14" fill="#0f1d3d" stroke="#8b5cf6"/><text x="430" y="66" font-weight="700">CommerceWeave MCP (local process, stdio)</text>
+    <rect x="256" y="84" width="170" height="46" rx="8" fill="#13244a"/><text x="341" y="112">Unified tools</text>
+    <rect x="436" y="84" width="170" height="46" rx="8" fill="#13244a"/><text x="521" y="112">Platform read tools</text>
+    <rect x="256" y="142" width="350" height="46" rx="8" fill="#13244a" stroke="#2dd4bf"/><text x="431" y="170">Proposals + approval check + audit</text>
+    <rect x="256" y="200" width="110" height="70" rx="8" fill="#13244a"/><text x="311" y="228">Allegro</text><text x="311" y="248" fill="#9fb0d0" font-size="12">connector</text>
+    <rect x="376" y="200" width="110" height="70" rx="8" fill="#13244a"/><text x="431" y="228">Base.com</text><text x="431" y="248" fill="#9fb0d0" font-size="12">connector</text>
+    <rect x="496" y="200" width="110" height="70" rx="8" fill="#13244a"/><text x="551" y="228">WooCommerce</text><text x="551" y="248" fill="#9fb0d0" font-size="12">connector</text>
+    <rect x="690" y="40" width="150" height="70" rx="12" fill="#13244a" stroke="#2dd4bf"/><text x="765" y="70" font-weight="700">Allegro API</text><text x="765" y="90" fill="#9fb0d0" font-size="12">OAuth2 · REST</text>
+    <rect x="690" y="130" width="150" height="70" rx="12" fill="#13244a" stroke="#8b5cf6"/><text x="765" y="160" font-weight="700">Base.com API</text><text x="765" y="180" fill="#9fb0d0" font-size="12">X-BLToken · 100/min</text>
+    <rect x="690" y="220" width="150" height="70" rx="12" fill="#13244a" stroke="#2dd4bf"/><text x="765" y="250" font-weight="700">WooCommerce</text><text x="765" y="270" fill="#9fb0d0" font-size="12">REST v3 · keys</text>
+  </g>
+  <g stroke="#2dd4bf" stroke-width="2" fill="none"><path d="M174 160 H236"/><path d="M606 235 H640 V75 H690"/><path d="M606 235 H660 V165 H690"/><path d="M606 235 H690"/></g>
+  <text x="430" y="316" fill="#9fb0d0" font-size="12" text-anchor="middle">Approvals come from a human terminal (commerceweave-mcp approve), never from the model.</text>
+</svg>

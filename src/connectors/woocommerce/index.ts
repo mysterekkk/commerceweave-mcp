@@ -1,5 +1,6 @@
 import { assertSafeWooUrl, type WooConfig } from '../../core/config.js';
 import { CommerceError } from '../../core/errors.js';
+import { assertResolvesPublic } from '../../core/host-guard.js';
 import { HttpClient } from '../../core/http.js';
 import { formatDecimal, normalizeMoney, parseDecimal } from '../../core/money.js';
 import type { CommerceOrder, CommercePrice, CommerceProduct, CommerceStore, CommerceVariant, CommerceInventory, OrderState } from '../../core/models.js';
@@ -31,6 +32,8 @@ export class WooConnector implements Connector {
     const auth = 'Basic ' + Buffer.from(`${cfg.consumerKey}:${cfg.consumerSecret}`).toString('base64');
     this.http = new HttpClient({
       connectionId: cfg.id, baseUrl: base, limiter: new RateLimiter(8, 1000), sleep: opts.sleep,
+      // Re-check DNS before every request so a public name cannot start pointing at an internal address.
+      beforeRequest: cfg.allowInsecure ? undefined : () => assertResolvesPublic(new URL(cfg.storeUrl).hostname),
       defaultHeaders: () => ({ Authorization: auth, Accept: 'application/json' }),
     });
   }

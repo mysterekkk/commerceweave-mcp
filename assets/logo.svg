@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="160" viewBox="0 0 640 160" role="img" aria-labelledby="t">
+  <title id="t">CommerceWeave MCP</title>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="144" height="144" rx="32" fill="#0b1530"/>
+  <g stroke="url(#g)" stroke-width="5" stroke-linecap="round" fill="none">
+    <path d="M80 80 L44 44"/><path d="M80 80 L116 44"/><path d="M80 80 L80 124"/>
+    <path d="M44 44 Q80 20 116 44" opacity=".45"/><path d="M116 44 Q132 100 80 124" opacity=".45"/><path d="M80 124 Q28 100 44 44" opacity=".45"/>
+  </g>
+  <circle cx="44" cy="44" r="11" fill="#2dd4bf"/><circle cx="116" cy="44" r="11" fill="#8b5cf6"/><circle cx="80" cy="124" r="11" fill="#2dd4bf"/>
+  <circle cx="80" cy="80" r="17" fill="#0b1530" stroke="url(#g)" stroke-width="5"/><circle cx="80" cy="80" r="6" fill="#e6edf7"/>
+  <text x="176" y="78" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#0b1530">CommerceWeave</text>
+  <text x="178" y="116" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="24" font-weight="500" fill="#5b6b8c" letter-spacing="3">MCP SERVER</text>
+</svg>

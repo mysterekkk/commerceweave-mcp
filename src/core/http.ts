@@ -9,6 +9,8 @@ export interface HttpOptions {
   timeoutMs?: number;
   maxRetries?: number;
   limiter?: RateLimiter;
+  /** Runs before every request attempt (e.g. SSRF re-validation). */
+  beforeRequest?: () => Promise<void>;
   defaultHeaders?: () => Promise<Record<string, string>> | Record<string, string>;
   sleep?: (ms: number) => Promise<void>;
 }
@@ -78,8 +80,9 @@ export class HttpClient {
   }
 
   buildUrl(path: string, query?: RequestOptions['query']): string {
-    const base = this.o.baseUrl.endsWith('/') ? this.o.baseUrl : this.o.baseUrl + '/';
-    const u = new URL(path.replace(/^\//, ''), base);
+    if (path.split('/').some((seg) => seg === '.' || seg === '..' || /^%2e/i.test(seg))) throw new CommerceError('VALIDATION_FAILED', 'Path traversal segments are not allowed');
+    // An empty path means "the base URL itself" (e.g. Base's connector.php); otherwise resolve relative to a directory.
+    const u = path === '' ? new URL(this.o.baseUrl) : new URL(path.replace(/^\//, ''), this.o.baseUrl.endsWith('/') ? this.o.baseUrl : this.o.baseUrl + '/');
     for (const [k, v] of Object.entries(query ?? {})) {
       if (v === undefined) continue;
       if (Array.isArray(v)) v.forEach((x) => u.searchParams.append(k, String(x)));
@@ -97,6 +100,7 @@ export class HttpClient {
     for (;;) {
       attempt++;
       await this.o.limiter?.acquire(r.signal);
+      await this.o.beforeRequest?.();
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(new Error('timeout')), this.timeoutMs);
       const onAbort = () => ctrl.abort(r.signal?.reason);

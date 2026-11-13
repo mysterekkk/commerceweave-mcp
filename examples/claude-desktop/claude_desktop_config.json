@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "commerceweave-demo": {
+      "command": "npx",
+      "args": ["-y", "commerceweave-mcp"],
+      "env": { "COMMERCEWEAVE_DEMO": "true" }
+    }
+  }
+}

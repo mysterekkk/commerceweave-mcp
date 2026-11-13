@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "commerceweave": {
+      "command": "npx",
+      "args": ["-y", "commerceweave-mcp"],
+      "env": { "COMMERCEWEAVE_CONFIG": "${userHome}/.commerceweave/config.json" }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "connections": [
+    { "platform": "allegro", "id": "allegro-main", "environment": "production", "clientId": "env:ALLEGRO_MAIN_CLIENT_ID", "clientSecret": "env:ALLEGRO_MAIN_CLIENT_SECRET" },
+    { "platform": "allegro", "id": "allegro-sandbox", "environment": "sandbox", "clientId": "env:ALLEGRO_SB_CLIENT_ID", "clientSecret": "env:ALLEGRO_SB_CLIENT_SECRET" },
+    { "platform": "baselinker", "id": "base-main", "token": "env:BASE_API_TOKEN", "statusMap": { "1051": "open", "1052": "open", "1053": "fulfilled", "1054": "cancelled" } },
+    { "platform": "woocommerce", "id": "shop-pl", "storeUrl": "https://shop.example.com", "consumerKey": "env:WOO_PL_KEY", "consumerSecret": "env:WOO_PL_SECRET", "access": "read_only" },
+    { "platform": "woocommerce", "id": "shop-de", "storeUrl": "https://shop.example.de", "consumerKey": "env:WOO_DE_KEY", "consumerSecret": "env:WOO_DE_SECRET" }
+  ],
+  "skuMap": [
+    { "label": "Desk lamp", "members": [ { "connectionId": "base-main", "productId": "502" }, { "connectionId": "shop-pl", "productId": "902" } ] }
+  ]
+}

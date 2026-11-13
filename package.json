@@ -44,7 +44,7 @@
     "SECURITY.md",
     "CHANGELOG.md",
     "examples",
-    "assets/logo.svg",
+    "assets/*.svg",
     ".env.example",
     "server.json"
   ],

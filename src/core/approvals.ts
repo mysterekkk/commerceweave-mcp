@@ -1,5 +1,5 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { appendFileSync, chmodSync, existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { appendFileSync, chmodSync, existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Platform } from './models.js';
 import { CommerceError } from './errors.js';
@@ -120,8 +120,18 @@ export class ApprovalStore {
     if (Date.parse(rec.expiresAt) < Date.now() || Date.parse(p.expiresAt) < Date.now()) throw new CommerceError('APPROVAL_INVALID', 'Approval has expired');
   }
 
-  consumeApproval(id: string) {
-    try { unlinkSync(this.aFile(id)); } catch { /* already gone */ }
+  /**
+   * Atomically takes ownership of the approval (rename is atomic). Exactly one caller can win, so two concurrent
+   * execute calls can never both run the same approved plan. Must be called synchronously after verifyApproval.
+   */
+  claimApproval(id: string) {
+    const a = this.aFile(id);
+    try {
+      renameSync(a, a + '.claimed');
+    } catch {
+      throw new CommerceError('APPROVAL_INVALID', `Approval for ${id} was already used (single-use).`);
+    }
+    try { unlinkSync(a + '.claimed'); } catch { /* keep the claimed marker if it cannot be removed */ }
   }
 
   audit(entry: Record<string, unknown>) {

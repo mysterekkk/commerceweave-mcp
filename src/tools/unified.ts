@@ -16,7 +16,7 @@ const dateRange = {
   to: z.string().max(40).optional().describe('ISO 8601 end.'),
   timezone: tz,
 };
-const pid = z.string().min(1).max(64);
+const pid = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/, 'ids may contain letters, digits, - and _ only');
 
 export function registerUnified(server: McpServer, ctx: Ctx) {
   const { reads, writes, reg, settings } = ctx;
@@ -102,7 +102,7 @@ export function registerUnified(server: McpServer, ctx: Ctx) {
 
   if (settings.mode === 'read_only') return;
 
-  const itemStock = z.object({ productId: pid, variantId: pid.optional().describe('Required for variable products.'), catalogId: z.string().max(32).optional().describe('Base catalog id; required when the Base account has several.'), locationId: z.string().max(32).optional().describe('Base warehouse id like bl_123; required when several warehouses hold stock.'), quantity: z.number().int().min(0).max(1_000_000).describe('New absolute stock quantity.') });
+  const itemStock = z.object({ productId: pid, variantId: pid.optional().describe('Required for variable products.'), catalogId: z.string().regex(/^[A-Za-z0-9_-]{1,32}$/).optional().describe('Base catalog id; required when the Base account has several.'), locationId: z.string().max(32).optional().describe('Base warehouse id like bl_123; required when several warehouses hold stock.'), quantity: z.number().int().min(0).max(1_000_000).describe('New absolute stock quantity.') });
   define(server, {
     name: 'commerce_prepare_stock_update', title: 'Prepare a stock change (no write)', annotations: PROPOSE_ANNOTATIONS,
     description: 'Reads current stock, then records a reviewable proposal with before/after values. NOTHING IS CHANGED ON THE PLATFORM. connectionId is mandatory. Targets that are ambiguous (variable product without variantId, several Base warehouses/catalogs) are rejected. A human must approve the exact plan out-of-band before it can run.',
@@ -110,7 +110,7 @@ export function registerUnified(server: McpServer, ctx: Ctx) {
     run: (a, signal) => writes.prepareStock(a.connectionId, a.items, signal),
   });
 
-  const itemPrice = z.object({ productId: pid, variantId: pid.optional(), catalogId: z.string().max(32).optional(), priceGroup: z.string().max(32).optional().describe('Base price group id; required when several exist.'), newPrice: z.string().regex(/^\d{1,9}(\.\d{1,6})?$/).optional().describe('Exact new gross price as a decimal string, e.g. "49.90".'), changePercent: z.string().regex(/^-?\d{1,3}(\.\d{1,4})?$/).optional().describe('Percent change applied to the CURRENT price, e.g. "5" or "-2.5". Rounded half-up to 2 decimals.') });
+  const itemPrice = z.object({ productId: pid, variantId: pid.optional(), catalogId: z.string().regex(/^[A-Za-z0-9_-]{1,32}$/).optional(), priceGroup: z.string().max(32).optional().describe('Base price group id; required when several exist.'), newPrice: z.string().regex(/^\d{1,9}(\.\d{1,6})?$/).optional().describe('Exact new gross price as a decimal string, e.g. "49.90".'), changePercent: z.string().regex(/^-?\d{1,3}(\.\d{1,4})?$/).optional().describe('Percent change applied to the CURRENT price, e.g. "5" or "-2.5". Rounded half-up to 2 decimals.') });
   define(server, {
     name: 'commerce_prepare_price_update', title: 'Prepare a price change (no write)', annotations: PROPOSE_ANNOTATIONS,
     description: 'Computes new prices with exact decimal arithmetic from the live current price (newPrice or changePercent per item) and records a reviewable proposal with before/after and the difference. NOTHING IS CHANGED ON THE PLATFORM. Woo changes the regular price only (warns if a sale price exists). A human must approve the exact plan out-of-band.',

@@ -3,6 +3,7 @@ import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import * as z from 'zod/v4';
 import { CommerceError } from './errors.js';
+import { assertPublicHostname } from './host-guard.js';
 import { registerSecret } from './redact.js';
 
 export const ModeSchema = z.enum(['read_only', 'proposal', 'approval_required']);
@@ -111,7 +112,9 @@ export function loadSettings(env: NodeJS.ProcessEnv = process.env): Settings {
     try {
       json = JSON.parse(readFileSync(path, 'utf8'));
     } catch (e) {
-      throw new CommerceError('CONFIG_INVALID', `Cannot read COMMERCEWEAVE_CONFIG (${path}): ${(e as Error).message}`);
+      // Never echo parser output: it can contain fragments of the file, which holds credentials.
+      const why = (e as NodeJS.ErrnoException).code ? `file error ${(e as NodeJS.ErrnoException).code}` : 'invalid JSON';
+      throw new CommerceError('CONFIG_INVALID', `Cannot read COMMERCEWEAVE_CONFIG (${path}): ${why}`);
     }
     const resolved = resolveRef(json, env) as { connections?: unknown[]; skuMap?: unknown };
     rawConns.push(...(resolved.connections ?? []));
@@ -152,14 +155,16 @@ export function loadSettings(env: NodeJS.ProcessEnv = process.env): Settings {
   };
 }
 
-const PRIVATE_HOST = /^(localhost|.*\.local|.*\.internal|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|\[?::1\]?$|\[?f[cd][0-9a-f]{2}:)/i;
-
 /** SSRF guard for the one user-supplied URL: production Woo stores must be public HTTPS. */
 export function assertSafeWooUrl(url: string) {
   const u = new URL(url);
   if (u.protocol !== 'https:') throw new CommerceError('CONFIG_INVALID', 'WooCommerce store URL must use https:// (set allowInsecure only for local development stores)');
   if (u.username || u.password) throw new CommerceError('CONFIG_INVALID', 'WooCommerce store URL must not contain credentials');
-  if (PRIVATE_HOST.test(u.hostname)) throw new CommerceError('CONFIG_INVALID', `WooCommerce store URL points to a private/loopback host (${u.hostname}); set allowInsecure only for local development stores`);
+  try {
+    assertPublicHostname(u.hostname);
+  } catch {
+    throw new CommerceError('CONFIG_INVALID', `WooCommerce store URL points to a private/loopback host (${u.hostname}); set allowInsecure only for local development stores`);
+  }
 }
 
 export function isWritable(c: ConnectionConfig, mode: Mode): boolean {
