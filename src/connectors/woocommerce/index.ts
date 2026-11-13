@@ -186,6 +186,12 @@ export class WooConnector implements Connector {
       const r = await this.http.request<J>({ path: `orders/${encodeURIComponent(op.orderId)}`, signal });
       return { value: String(r.data.status), description: `order #${r.data.id} status "${r.data.status}"` };
     }
+    if (op.kind === 'offer_publication') throw new CommerceError('NOT_SUPPORTED', 'Offer publication is an Allegro concept.', { connectionId: this.id });
+    if (op.kind === 'product_draft') {
+      const r = await this.http.request<J[]>({ path: 'products', query: { sku: op.sku, status: 'any', per_page: 1 }, signal });
+      const hit = r.data[0];
+      return { value: hit ? `exists:${hit.status}` : 'absent', description: `product with SKU "${op.sku}"`, currency: await this.getCurrency(signal), warnings: [hit ? `A product with this SKU already exists (status ${hit.status}); creation will be refused.` : 'Created as a DRAFT: it is not visible in the shop until you publish it in WooCommerce yourself.'] };
+    }
     const t = this.target(op);
     const r = await this.http.request<J>({ path: t.path, signal });
     const p = r.data;
@@ -203,6 +209,13 @@ export class WooConnector implements Connector {
 
   async write(op: WriteOperation, _current: CurrentState, signal?: AbortSignal): Promise<WriteResult> {
     if (!this.writable) throw new CommerceError('MODE_FORBIDS', `Connection ${this.id} is configured read-only`, { connectionId: this.id });
+    if (op.kind === 'offer_publication') throw new CommerceError('NOT_SUPPORTED', 'Offer publication is an Allegro concept.', { connectionId: this.id });
+    if (op.kind === 'product_draft') {
+      const body: Record<string, unknown> = { name: op.name, type: 'simple', status: 'draft', sku: op.sku, regular_price: formatDecimal(parseDecimal(op.regularPrice), 2) };
+      if (op.stockQuantity !== undefined) { body.manage_stock = true; body.stock_quantity = op.stockQuantity; }
+      await this.http.request({ method: 'POST', path: 'products', body: JSON.stringify(body), contentType: 'application/json', signal });
+      return { applied: true, detail: `draft product "${op.sku}" created` };
+    }
     if (op.kind === 'order_note') {
       await this.http.request({ method: 'POST', path: `orders/${encodeURIComponent(op.orderId)}/notes`, body: JSON.stringify({ note: op.note, customer_note: false }), contentType: 'application/json', signal });
       return { applied: true, detail: `private note added to order ${op.orderId}` };

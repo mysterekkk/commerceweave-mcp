@@ -29,7 +29,7 @@ Source of truth: the official OpenAPI file https://developer.allegro.pl/swagger.
 | Price write | `PUT /sale/offer-price-change-commands/{commandId}` body `{modification:{type:"FIXED_PRICE",price:{amount,currency}}, offerCriteria:[...]}` |
 | Async handling | `201` only means the command was registered. We poll `GET .../{commandId}` until `completedAt` is set, then read `GET .../{commandId}/tasks` and require task `status == SUCCESS` (documented values: `NEW`, `SUCCESS`, `FAIL`). Timeout produces `WRITE_OUTCOME_UNKNOWN`, never "success". |
 | Order status write | `PUT /order/checkout-forms/{id}/fulfillment?checkoutForm.revision=…` body `{status}`; statuses from `CheckoutFormFulfillmentStatus` (`NEW, PROCESSING, READY_FOR_SHIPMENT, READY_FOR_PICKUP, SENT, PICKED_UP, CANCELLED, SUSPENDED`; `RETURNED` is system-set and rejected). Revision gives optimistic concurrency (a stale revision is rejected by Allegro with 409). |
-| Offer publish/end | `PUT /sale/offer-publication-commands/{commandId}` exists in the API; **not implemented** in 0.1.0 (see roadmap). |
+| Offer publish/end | `PUT /sale/offer-publication-commands/{commandId}` body `{publication:{action:"ACTIVATE"|"END"}, offerCriteria:[...]}`; polled like the other commands. Verified by reading back `publication.status` (ACTIVATING is treated as ACTIVE). |
 | Pagination | `offset`/`limit` (offers up to 100 per call used here; orders 100) |
 | Limits | Allegro enforces per-endpoint limits; the client paces itself at 9 req/s and honours `Retry-After` on 429 for reads. |
 
@@ -63,7 +63,7 @@ Source: https://developer.woocommerce.com/docs/apis/rest-api/ and the generated 
 | Variations | Variable parents are rejected as write targets (`AMBIGUOUS_TARGET`); `manage_stock: "parent"` variations report `managed:false` rather than a fake number |
 | Prices | `regular_price` is written; an existing `sale_price` is reported as a warning |
 | Order note | `POST orders/{id}/notes` with `customer_note:false` (private only) |
-| Not implemented | `woo_create_product_draft`; direct `woo_update_*` tools (all writes go through the proposal flow instead) |
+| Draft product | `POST products` with `status:"draft"`, `type:"simple"`, mandatory unique `sku`; the proposal is refused if the SKU exists |
 
 ### WooCommerce's own MCP
 

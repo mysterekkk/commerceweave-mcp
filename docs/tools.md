@@ -21,6 +21,8 @@ Available whenever the server runs (with demo data or any connection).
 | `commerce_prepare_price_update` | proposal+ | record a price-change plan with exact decimal maths (no write) |
 | `commerce_prepare_order_status_update` | proposal+ | record an order-status change plan (no write) |
 | `commerce_prepare_order_note` | proposal+ | record a plan to add an internal order note (Woo private note, Base seller comment; no write) |
+| `commerce_prepare_offer_publication` | proposal+ | record a plan to publish (ACTIVATE) or end an Allegro offer (no write) |
+| `commerce_prepare_product_draft` | proposal+ | record a plan to create a DRAFT simple product on WooCommerce (no write) |
 | `commerce_get_proposal` | proposal+ | show a proposal and its result |
 | `commerce_execute_proposal` | approval_required | run a human-approved proposal once |
 
@@ -44,7 +46,8 @@ The roadmap list contained platform-specific write tools (`allegro_update_offer_
 | price | offer price command (async, polled) | per catalog/price group/variant | regular price of product or variation |
 | order status | fulfillment status (revision-checked) | status id | core statuses |
 | internal order note | not supported | appended to seller comment (200 char limit) | private staff note |
-| product drafts, offer publish/end | not implemented | not implemented | not implemented |
+| offer publish / end | async publication command | not supported | not supported |
+| create product | not implemented | not implemented | DRAFT simple product only (SKU required, never overwrites) |
 
 ## MCP extras
 

@@ -115,6 +115,30 @@ export class Writes {
     return this.finish(c, `Add a note to order ${orderId} in ${c.id}`, [{ op, before, expectedAfter: after, label: `order ${orderId} — ${before.description}`, beforeDisplay: before.value === '' ? '(empty)' : before.value, afterDisplay: `+ "${op.note}"` }], before.warnings ?? []);
   }
 
+  async prepareOfferPublication(connectionId: string, offerId: string, action: 'ACTIVATE' | 'END', signal?: AbortSignal) {
+    const c = this.reg.get(connectionId);
+    this.guard(c, 1);
+    const op: WriteOperation = { kind: 'offer_publication', offerId, action };
+    const before = await c.readCurrent(op, signal);
+    const after = action === 'ACTIVATE' ? 'ACTIVE' : 'ENDED';
+    return this.finish(c, `${action === 'ACTIVATE' ? 'Publish' : 'End'} offer ${offerId} in ${c.id}`, [{ op, before, expectedAfter: after, label: `offer ${offerId} — ${before.description}`, beforeDisplay: before.value, afterDisplay: after }], before.warnings ?? []);
+  }
+
+  async prepareProductDraft(connectionId: string, d: { sku: string; name: string; regularPrice: string; stockQuantity?: number }, signal?: AbortSignal) {
+    const c = this.reg.get(connectionId);
+    this.guard(c, 1);
+    if (!/^[A-Za-z0-9._-]{1,64}$/.test(d.sku)) throw new CommerceError('VALIDATION_FAILED', 'sku must be 1..64 characters of letters, digits, dot, dash or underscore.');
+    if (!d.name.trim() || d.name.length > 150 || hasUnsafeChars(d.name)) throw new CommerceError('VALIDATION_FAILED', 'name must be 1..150 characters of plain text.');
+    const price = roundDecimal(parseDecimal(d.regularPrice), 2);
+    if (price <= 0n) throw new CommerceError('VALIDATION_FAILED', 'regularPrice must be greater than 0.');
+    if (d.stockQuantity !== undefined && (!Number.isInteger(d.stockQuantity) || d.stockQuantity < 0 || d.stockQuantity > 1_000_000)) throw new CommerceError('VALIDATION_FAILED', 'stockQuantity must be an integer between 0 and 1000000.');
+    const op: WriteOperation = { kind: 'product_draft', sku: d.sku, name: d.name.trim(), regularPrice: formatDecimal(price, 2), stockQuantity: d.stockQuantity };
+    const before = await c.readCurrent(op, signal);
+    if (before.value !== 'absent') throw new CommerceError('VALIDATION_FAILED', `A product with SKU "${d.sku}" already exists on ${c.id}; drafts never overwrite products.`, { connectionId: c.id });
+    const shown = `DRAFT "${op.name}" sku ${op.sku} price ${op.regularPrice} ${before.currency ?? ''}${op.stockQuantity !== undefined ? ` stock ${op.stockQuantity}` : ''}`.replace(/ +/g, ' ').trim();
+    return this.finish(c, `Create draft product ${op.sku} in ${c.id}`, [{ op, before, expectedAfter: 'exists:draft', label: `new product — ${before.description}`, beforeDisplay: '(does not exist)', afterDisplay: shown }], before.warnings ?? []);
+  }
+
   /** Executes a human-approved proposal exactly once. */
   async execute(proposalId: string, signal?: AbortSignal) {
     if (this.mode !== 'approval_required') throw new CommerceError('MODE_FORBIDS', `Execution requires COMMERCEWEAVE_MODE=approval_required (current: ${this.mode}).`);

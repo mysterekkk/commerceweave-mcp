@@ -75,6 +75,12 @@ export async function startFakeWoo(): Promise<FakeServer> {
       const all = sku ? fx.products.filter((x) => x.sku === sku) : fx.products;
       return json(res, 200, all.slice((page - 1) * per, page * per), { 'X-WP-Total': String(all.length), 'X-WP-TotalPages': String(Math.ceil(all.length / per)) });
     }
+    if (p === 'products' && m === 'POST') {
+      if (fx.products.some((x) => x.sku === body.sku)) return json(res, 400, { code: 'product_invalid_sku', message: 'Invalid or duplicated SKU.' });
+      const created = { id: 900 + fx.products.length, type: 'simple', stock_status: 'instock', manage_stock: false, stock_quantity: null, sale_price: '', price: body.regular_price, ...body };
+      fx.products.push(created);
+      return json(res, 201, created);
+    }
     let mm = /^products\/(\d+)$/.exec(p);
     if (mm) {
       const pr = fx.products.find((x) => x.id === Number(mm?.[1]));

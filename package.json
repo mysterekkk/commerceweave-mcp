@@ -1,6 +1,6 @@
 {
   "name": "commerceweave-mcp",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "One MCP server. Three commerce platforms. Connect AI agents to Allegro, Base.com and WooCommerce through one secure, local MCP server.",
   "type": "module",
   "license": "MIT",

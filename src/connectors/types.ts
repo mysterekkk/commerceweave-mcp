@@ -34,7 +34,11 @@ export type WriteOperation =
   | { kind: 'stock'; productId: string; variantId?: string; catalogId?: string; locationId?: string; quantity: number }
   | { kind: 'price'; productId: string; variantId?: string; catalogId?: string; priceGroup?: string; amount: string; currency?: string | null }
   | { kind: 'order_status'; orderId: string; status: string }
-  | { kind: 'order_note'; orderId: string; note: string };
+  | { kind: 'order_note'; orderId: string; note: string }
+  /** Allegro: start (ACTIVATE) or end (END) the publication of an offer. */
+  | { kind: 'offer_publication'; offerId: string; action: 'ACTIVATE' | 'END' }
+  /** WooCommerce: create a simple product in DRAFT status (never published). `sku` is mandatory so the result is identifiable. */
+  | { kind: 'product_draft'; sku: string; name: string; regularPrice: string; stockQuantity?: number };
 
 export interface CurrentState {
   /** Opaque, comparable snapshot of the field being changed. */

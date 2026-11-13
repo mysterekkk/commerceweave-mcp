@@ -59,7 +59,7 @@ export async function startFakeAllegro(): Promise<AllegroFake> {
       if (u.searchParams.get('checkoutForm.revision') !== o.revision) return json(res, 409, { errors: [{ code: 'RevisionMismatch' }] });
       o.fulfillment.status = body.status; res.writeHead(204); return res.end();
     }
-    m = /^\/sale\/offer-(quantity|price)-change-commands\/([\w-]+)(\/tasks)?$/.exec(p);
+    m = /^\/sale\/offer-(quantity-change|price-change|publication)-commands\/([\w-]+)(\/tasks)?$/.exec(p);
     if (m) {
       const [, kind, id, tasks] = m as unknown as [string, string, string, string?];
       if (req.method === 'PUT') {
@@ -71,7 +71,8 @@ export async function startFakeAllegro(): Promise<AllegroFake> {
       if (tasks) {
         const offer = fx.offers.find((o) => o.id === c.offerId);
         if (me.failCommand) return json(res, 200, { tasks: [{ offer: { id: c.offerId }, status: 'FAIL', errors: [{ code: 'X', userMessage: 'Price too low for category' }] }] });
-        if (c.kind === 'quantity') offer.stock.available = c.body.modification.value;
+        if (c.kind === 'quantity-change') offer.stock.available = c.body.modification.value;
+        else if (c.kind === 'publication') offer.publication.status = c.body.publication.action === 'ACTIVATE' ? 'ACTIVE' : 'ENDED';
         else offer.sellingMode.price.amount = c.body.modification.price.amount;
         return json(res, 200, { tasks: [{ offer: { id: c.offerId }, status: 'SUCCESS' }] });
       }

@@ -133,6 +133,20 @@ export function registerUnified(server: McpServer, ctx: Ctx) {
   });
 
   define(server, {
+    name: 'commerce_prepare_offer_publication', title: 'Prepare publishing or ending an Allegro offer (no write)', annotations: PROPOSE_ANNOTATIONS,
+    description: 'Records a proposal to ACTIVATE (publish; may incur Allegro fees) or END an Allegro offer. Allegro only. Runs through the async publication command API after human approval. NOTHING IS CHANGED UNTIL A HUMAN APPROVES.',
+    schema: z.object({ connectionId: z.string().max(32), offerId: pid, action: z.enum(['ACTIVATE', 'END']) }),
+    run: (a, signal) => writes.prepareOfferPublication(a.connectionId, a.offerId, a.action, signal),
+  });
+
+  define(server, {
+    name: 'commerce_prepare_product_draft', title: 'Prepare a WooCommerce draft product (no write)', annotations: PROPOSE_ANNOTATIONS,
+    description: 'Records a proposal to create a simple product in DRAFT status on WooCommerce (never published; SKU required and must not exist yet). NOTHING IS CREATED UNTIL A HUMAN APPROVES.',
+    schema: z.object({ connectionId: z.string().max(32), sku: z.string().regex(/^[A-Za-z0-9._-]{1,64}$/), name: z.string().min(1).max(150), regularPrice: z.string().regex(/^\d{1,9}(\.\d{1,6})?$/), stockQuantity: z.number().int().min(0).max(1_000_000).optional() }),
+    run: (a, signal) => writes.prepareProductDraft(a.connectionId, { sku: a.sku, name: a.name, regularPrice: a.regularPrice, stockQuantity: a.stockQuantity }, signal),
+  });
+
+  define(server, {
     name: 'commerce_get_proposal', title: 'Show a proposal', annotations: READ_ANNOTATIONS,
     description: 'Shows a stored proposal: plan, status (pending/executing/executed/failed), expiry and execution result.',
     schema: z.object({ proposalId: z.string().regex(/^cw_[a-z0-9]{12}$/) }),

@@ -219,6 +219,7 @@ export class BaseConnector implements Connector {
   }
 
   async readCurrent(op: WriteOperation, signal?: AbortSignal): Promise<CurrentState> {
+    if (op.kind === 'offer_publication' || op.kind === 'product_draft') throw new CommerceError('NOT_SUPPORTED', `${op.kind} is not supported for Base.com.`, { connectionId: this.id });
     if (op.kind === 'order_note') {
       const r = await this.call<J>('getOrders', { order_id: intId(op.orderId, 'orderId'), get_unconfirmed_orders: true }, false, signal);
       const o = (r.orders ?? [])[0];
@@ -257,6 +258,7 @@ ${op.note}` : op.note;
 
   async write(op: WriteOperation, _current: CurrentState, signal?: AbortSignal): Promise<WriteResult> {
     if (!this.writable) throw new CommerceError('MODE_FORBIDS', `Connection ${this.id} is configured read-only`, { connectionId: this.id });
+    if (op.kind === 'offer_publication' || op.kind === 'product_draft') throw new CommerceError('NOT_SUPPORTED', `${op.kind} is not supported for Base.com.`, { connectionId: this.id });
     if (op.kind === 'order_note') {
       const cur = await this.readCurrent(op, signal);
       await this.call('setOrderFields', { order_id: intId(op.orderId, 'orderId'), admin_comments: cur.noteAfter }, true, signal);

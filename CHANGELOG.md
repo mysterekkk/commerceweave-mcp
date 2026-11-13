@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0
+
+- New approved proposal types: Allegro offer publish/end (`commerce_prepare_offer_publication`, async publication command API) and WooCommerce DRAFT product creation (`commerce_prepare_product_draft`, SKU required, never overwrites, never published).
+- Dependabot no longer proposes major-version bumps automatically.
+
 ## 0.1.2
 
 - Approval screen escapes control, ANSI, bidi and zero-width characters in all untrusted values; notes may not contain line breaks or control characters.
@@ -21,4 +26,4 @@ First public version.
 - De-duplication of imported orders, stock discrepancy detection, low stock, sales summary, time-zone aware ranges, exact decimal prices.
 - Demo mode with synthetic data, CLI (`check`, `doctor`, `setup allegro`, `approve`, ...), English and Polish docs.
 
-Not yet validated against live platform accounts. Not implemented: order notes, product drafts, offer publish/end, HTTP transport.
+Not yet validated against live platform accounts.

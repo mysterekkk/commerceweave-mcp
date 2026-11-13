@@ -169,6 +169,17 @@ export class AllegroConnector implements Connector {
       if (o.status !== 'READY_FOR_PROCESSING') w.push(`Order payment state is ${o.status}; fulfillment changes on unpaid orders are usually a mistake.`);
       return { value: String(o.fulfillment?.status ?? 'NEW'), description: `order ${op.orderId} fulfillment status`, revision: o.revision ? String(o.revision) : undefined, warnings: w };
     }
+    if (op.kind === 'product_draft') throw new CommerceError('NOT_SUPPORTED', 'Product drafts are only supported for WooCommerce.', { connectionId: this.id });
+    if (op.kind === 'offer_publication') {
+      const o = await this.getOffer(op.offerId, signal);
+      const st = o.status === 'ACTIVATING' ? 'ACTIVE' : String(o.status ?? 'UNKNOWN');
+      const w = op.action === 'ACTIVATE'
+        ? ['Activating an offer publishes it on Allegro and can incur listing/commission fees.']
+        : ['Ending an offer removes it from sale; it cannot be undone by this tool (re-activation is a separate approved change).'];
+      if (op.action === 'ACTIVATE' && st === 'ACTIVE') w.push('Offer is already active.');
+      if (op.action === 'END' && st === 'ENDED') w.push('Offer is already ended.');
+      return { value: st, description: `offer ${op.offerId} publication status`, warnings: w };
+    }
     const offer = await this.getOffer(op.productId, signal);
     if (op.kind === 'stock') {
       if (!offer.stock) throw new CommerceError('NOT_SUPPORTED', `Offer ${op.productId} has no stock section (not a buy-now offer?)`, { connectionId: this.id });
@@ -180,9 +191,9 @@ export class AllegroConnector implements Connector {
   }
 
   /** Request -> command id -> status -> per-offer result. A 201 only means "registered", never "done". */
-  private async runCommand(kind: 'quantity' | 'price', body: object, offerId: string, signal?: AbortSignal): Promise<string> {
+  private async runCommand(kind: 'quantity' | 'price' | 'publication', body: object, offerId: string, signal?: AbortSignal): Promise<string> {
     const commandId = randomUUID();
-    const base = `sale/offer-${kind}-change-commands/${commandId}`;
+    const base = kind === 'publication' ? `sale/offer-publication-commands/${commandId}` : `sale/offer-${kind}-change-commands/${commandId}`;
     await this.api({ method: 'PUT', path: base, body: JSON.stringify(body), idempotent: false }, signal);
     const deadline = Date.now() + this.pollTimeoutMs;
     for (;;) {
@@ -198,7 +209,7 @@ export class AllegroConnector implements Connector {
         return commandId;
       }
       if (Date.now() > deadline) {
-        throw new CommerceError('WRITE_OUTCOME_UNKNOWN', `Allegro command ${commandId} was accepted but has not completed after ${Math.round(this.pollTimeoutMs / 1000)}s. Check GET /sale/offer-${kind}-change-commands/${commandId} before retrying.`, { connectionId: this.id });
+        throw new CommerceError('WRITE_OUTCOME_UNKNOWN', `Allegro command ${commandId} was accepted but has not completed after ${Math.round(this.pollTimeoutMs / 1000)}s. Check GET /${base} before retrying.`, { connectionId: this.id });
       }
     }
   }
@@ -210,6 +221,11 @@ export class AllegroConnector implements Connector {
       if (!(ALLEGRO_FULFILLMENT_STATUSES as readonly string[]).includes(op.status)) throw new CommerceError('VALIDATION_FAILED', `Unknown Allegro fulfillment status "${op.status}". Allowed: ${ALLEGRO_FULFILLMENT_STATUSES.join(', ')}`);
       await this.api({ method: 'PUT', path: `order/checkout-forms/${encodeURIComponent(op.orderId)}/fulfillment`, query: { 'checkoutForm.revision': current.revision }, body: JSON.stringify({ status: op.status }), idempotent: false }, signal);
       return { applied: true, detail: `order ${op.orderId} fulfillment -> ${op.status}` };
+    }
+    if (op.kind === 'product_draft') throw new CommerceError('NOT_SUPPORTED', 'Product drafts are only supported for WooCommerce.', { connectionId: this.id });
+    if (op.kind === 'offer_publication') {
+      const id = await this.runCommand('publication', { publication: { action: op.action }, offerCriteria: [{ offers: [{ id: op.offerId }], type: 'CONTAINS_OFFERS' }] }, op.offerId, signal);
+      return { applied: true, detail: `publication command ${id} (${op.action}) succeeded` };
     }
     const criteria = [{ offers: [{ id: op.productId }], type: 'CONTAINS_OFFERS' }];
     if (op.kind === 'stock') {

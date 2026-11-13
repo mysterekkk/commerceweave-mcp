@@ -76,6 +76,7 @@ export class DemoConnector implements Connector {
   }
 
   async readCurrent(op: WriteOperation): Promise<CurrentState> {
+    if (op.kind === 'offer_publication' || op.kind === 'product_draft') throw new CommerceError('NOT_SUPPORTED', `${op.kind} is not available in demo mode.`, { connectionId: this.id });
     if (op.kind === 'order_note') {
       if (!this.orders.some((x) => x.source.externalId === op.orderId)) throw new CommerceError('NOT_FOUND', `Demo order ${op.orderId} not found`, { connectionId: this.id });
       const n = (this.notes.get(op.orderId) ?? []).length;
@@ -93,6 +94,7 @@ export class DemoConnector implements Connector {
   }
 
   async write(op: WriteOperation): Promise<WriteResult> {
+    if (op.kind === 'offer_publication' || op.kind === 'product_draft') throw new CommerceError('NOT_SUPPORTED', `${op.kind} is not available in demo mode.`, { connectionId: this.id });
     if (!this.writable) throw new CommerceError('MODE_FORBIDS', `Connection ${this.id} is configured read-only`, { connectionId: this.id });
     if (op.kind === 'order_note') {
       this.notes.set(op.orderId, [...(this.notes.get(op.orderId) ?? []), op.note]);
