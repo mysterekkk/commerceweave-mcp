@@ -162,6 +162,7 @@ export class AllegroConnector implements Connector {
   }
 
   async readCurrent(op: WriteOperation, signal?: AbortSignal): Promise<CurrentState> {
+    if (op.kind === 'order_note') throw new CommerceError('NOT_SUPPORTED', 'Allegro has no seller order-note endpoint in this connector.', { connectionId: this.id });
     if (op.kind === 'order_status') {
       const o = await this.api<J>({ path: `order/checkout-forms/${encodeURIComponent(op.orderId)}` }, signal);
       const w: string[] = [];
@@ -204,6 +205,7 @@ export class AllegroConnector implements Connector {
 
   async write(op: WriteOperation, current: CurrentState, signal?: AbortSignal): Promise<WriteResult> {
     if (!this.writable) throw new CommerceError('MODE_FORBIDS', `Connection ${this.id} is configured read-only`, { connectionId: this.id });
+    if (op.kind === 'order_note') throw new CommerceError('NOT_SUPPORTED', 'Allegro has no seller order-note endpoint in this connector.', { connectionId: this.id });
     if (op.kind === 'order_status') {
       if (!(ALLEGRO_FULFILLMENT_STATUSES as readonly string[]).includes(op.status)) throw new CommerceError('VALIDATION_FAILED', `Unknown Allegro fulfillment status "${op.status}". Allowed: ${ALLEGRO_FULFILLMENT_STATUSES.join(', ')}`);
       await this.api({ method: 'PUT', path: `order/checkout-forms/${encodeURIComponent(op.orderId)}/fulfillment`, query: { 'checkoutForm.revision': current.revision }, body: JSON.stringify({ status: op.status }), idempotent: false }, signal);

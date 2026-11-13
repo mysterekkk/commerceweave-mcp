@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- WooCommerce connections are now DNS-pinned (undici agent): the validated address is the connected address, closing the DNS-rebinding window.
+- New proposal type `commerce_prepare_order_note` (Woo private note, Base seller comment append with 200-char check, read-back verified).
+- Tag-triggered npm publish workflow (needs the `NPM_TOKEN` repository secret).
+
 ## 0.1.0
 
 First public version.

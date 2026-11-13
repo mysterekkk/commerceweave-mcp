@@ -212,6 +212,16 @@ export class BaseConnector implements Connector {
   }
 
   async readCurrent(op: WriteOperation, signal?: AbortSignal): Promise<CurrentState> {
+    if (op.kind === 'order_note') {
+      const r = await this.call<J>('getOrders', { order_id: Number(op.orderId), get_unconfirmed_orders: true }, false, signal);
+      const o = (r.orders ?? [])[0];
+      if (!o) throw new CommerceError('NOT_FOUND', `Base order ${op.orderId} not found`, { connectionId: this.id });
+      const cur = String(o.admin_comments ?? '');
+      const next = cur ? `${cur}
+${op.note}` : op.note;
+      if (next.length > 200) throw new CommerceError('VALIDATION_FAILED', `Base seller comments are limited to 200 characters; current ${cur.length} + note would be ${next.length}.`, { connectionId: this.id });
+      return { value: cur, noteAfter: next, description: `order ${op.orderId} seller comment (admin_comments)`, warnings: ['The note is appended to the order seller comment; it is not visible to the buyer.'] };
+    }
     if (op.kind === 'order_status') {
       const o = await this.getOrder(op.orderId, false, signal);
       const names = await this.orderStatuses(signal);
@@ -239,6 +249,11 @@ export class BaseConnector implements Connector {
 
   async write(op: WriteOperation, _current: CurrentState, signal?: AbortSignal): Promise<WriteResult> {
     if (!this.writable) throw new CommerceError('MODE_FORBIDS', `Connection ${this.id} is configured read-only`, { connectionId: this.id });
+    if (op.kind === 'order_note') {
+      const cur = await this.readCurrent(op, signal);
+      await this.call('setOrderFields', { order_id: Number(op.orderId), admin_comments: cur.noteAfter }, true, signal);
+      return { applied: true, detail: `note appended to order ${op.orderId}` };
+    }
     if (op.kind === 'order_status') {
       await this.call('setOrderStatus', { order_id: Number(op.orderId), status_id: Number(op.status) }, true, signal);
       return { applied: true, detail: `order ${op.orderId} -> status ${op.status}` };

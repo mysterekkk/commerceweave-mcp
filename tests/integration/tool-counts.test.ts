@@ -24,9 +24,9 @@ describe('tool surface per mode (documented counts)', () => {
     expect(n.filter((x) => x.startsWith('woo_'))).toHaveLength(9);
     expect(n.filter((x) => x.startsWith('commerce_'))).toHaveLength(9);
   });
-  it('proposal: 39, approval_required: 40, demo read_only: 9', async () => {
-    expect(await names({ ...ALL, COMMERCEWEAVE_MODE: 'proposal' })).toHaveLength(39);
-    expect(await names({ ...ALL, COMMERCEWEAVE_MODE: 'approval_required' })).toHaveLength(40);
+  it('proposal: 40, approval_required: 41, demo read_only: 9', async () => {
+    expect(await names({ ...ALL, COMMERCEWEAVE_MODE: 'proposal' })).toHaveLength(40);
+    expect(await names({ ...ALL, COMMERCEWEAVE_MODE: 'approval_required' })).toHaveLength(41);
     expect(await names({ COMMERCEWEAVE_DEMO: 'true' })).toHaveLength(9);
   });
   it('every tool is described in docs/tools.md and no documented tool is missing', async () => {

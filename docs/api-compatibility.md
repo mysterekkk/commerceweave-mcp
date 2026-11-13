@@ -47,7 +47,7 @@ Source: https://api.baselinker.com/ and per-method pages `?method=<name>` (API "
 | Writes | `updateInventoryProductsStock` (`products:{id:{"bl_<warehouse>":qty}}`; variants addressed by variant id), `updateInventoryProductsPrices` (`{id:{<priceGroupId>:price}}`), `setOrderStatus` |
 | Catalogs vs warehouses vs sources | Catalogs (`inventory_id`), warehouses (`bl_123`, `shop_…`, `warehouse_…`) and order sources (`order_source`, `order_source_id`) are modelled separately. Writes **require** an explicit catalog when several exist and an explicit warehouse / price group when several exist. |
 | Import linkage | `external_order_id` + `order_source` carry the original marketplace order id (used for Allegro de-duplication). |
-| Not implemented | Order notes (`setOrderFields` overwrites `admin_comments`, so a safe append needs read-modify-write; deferred). |
+| Order note | `setOrderFields` with `admin_comments` (varchar 200). It overwrites, so the connector reads the current comment, appends, refuses if the result exceeds 200 characters and verifies by read-back. |
 
 ## WooCommerce REST API
 
@@ -62,7 +62,8 @@ Source: https://developer.woocommerce.com/docs/apis/rest-api/ and the generated 
 | Writes | `PUT products/{id}` or `products/{id}/variations/{vid}` (`manage_stock`, `stock_quantity`, `regular_price`), `PUT orders/{id}` (`status`) |
 | Variations | Variable parents are rejected as write targets (`AMBIGUOUS_TARGET`); `manage_stock: "parent"` variations report `managed:false` rather than a fake number |
 | Prices | `regular_price` is written; an existing `sale_price` is reported as a warning |
-| Not implemented | `woo_create_product_draft`, order notes (`POST orders/{id}/notes`), direct `woo_update_*` tools: all writes go through the proposal flow instead |
+| Order note | `POST orders/{id}/notes` with `customer_note:false` (private only) |
+| Not implemented | `woo_create_product_draft`; direct `woo_update_*` tools (all writes go through the proposal flow instead) |
 
 ### WooCommerce's own MCP
 

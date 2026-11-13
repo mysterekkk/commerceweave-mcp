@@ -33,7 +33,8 @@ export interface OrderPage {
 export type WriteOperation =
   | { kind: 'stock'; productId: string; variantId?: string; catalogId?: string; locationId?: string; quantity: number }
   | { kind: 'price'; productId: string; variantId?: string; catalogId?: string; priceGroup?: string; amount: string; currency?: string | null }
-  | { kind: 'order_status'; orderId: string; status: string };
+  | { kind: 'order_status'; orderId: string; status: string }
+  | { kind: 'order_note'; orderId: string; note: string };
 
 export interface CurrentState {
   /** Opaque, comparable snapshot of the field being changed. */
@@ -42,6 +43,8 @@ export interface CurrentState {
   currency?: string | null;
   /** Platform revision tokens needed for optimistic concurrency. */
   revision?: string;
+  /** For order_note: the value `value` must have after the note is added (used for read-back verification). */
+  noteAfter?: string;
   /** Human-readable ambiguity warnings (e.g. product on sale). */
   warnings?: string[];
 }

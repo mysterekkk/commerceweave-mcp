@@ -9,8 +9,10 @@ export interface HttpOptions {
   timeoutMs?: number;
   maxRetries?: number;
   limiter?: RateLimiter;
-  /** Runs before every request attempt (e.g. SSRF re-validation). */
+  /** Runs before every request attempt. */
   beforeRequest?: () => Promise<void>;
+  /** undici dispatcher (e.g. DNS-pinned agent). */
+  dispatcher?: unknown;
   defaultHeaders?: () => Promise<Record<string, string>> | Record<string, string>;
   sleep?: (ms: number) => Promise<void>;
 }
@@ -116,7 +118,8 @@ export class HttpClient {
           body: r.body as BodyInit | undefined,
           signal: ctrl.signal,
           redirect: 'error',
-        });
+          ...(this.o.dispatcher ? { dispatcher: this.o.dispatcher } : {}),
+        } as RequestInit);
       } catch (e) {
         clearTimeout(timer);
         r.signal?.removeEventListener('abort', onAbort);

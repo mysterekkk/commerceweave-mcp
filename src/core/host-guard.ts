@@ -1,5 +1,7 @@
+import { lookup as lookupCb } from 'node:dns';
 import { lookup } from 'node:dns/promises';
 import { BlockList, isIP } from 'node:net';
+import { Agent } from 'undici';
 import { CommerceError } from './errors.js';
 
 const blocked = new BlockList();
@@ -40,4 +42,26 @@ export async function assertResolvesPublic(hostname: string) {
   }
   const bad = addrs.find((a) => isBlockedIp(a.address));
   if (bad) throw new CommerceError('CONFIG_INVALID', `Store host ${h} resolves to a non-public address; refusing to send credentials there`);
+}
+
+/**
+ * An undici Agent whose DNS lookup is the validation step: the address that passes the block-list check is the
+ * very address the socket connects to, so DNS rebinding between "check" and "connect" is impossible.
+ */
+export function createPinnedAgent(): Agent {
+  return new Agent({
+    connect: {
+      lookup: (hostname, options, cb) => {
+        lookupCb(hostname, { ...options, all: true }, (err, addrs) => {
+          if (err) return cb(err, '', 4);
+          const list = addrs as unknown as Array<{ address: string; family: number }>;
+          const bad = list.find((a) => isBlockedIp(a.address));
+          if (bad) return cb(new CommerceError('CONFIG_INVALID', `Store host ${hostname} resolves to a non-public address; refusing to connect`) as unknown as NodeJS.ErrnoException, '', 4);
+          if ((options as { all?: boolean }).all) return (cb as unknown as (e: null, a: unknown) => void)(null, list);
+          const first = list[0] as { address: string; family: number };
+          cb(null, first.address, first.family);
+        });
+      },
+    },
+  });
 }

@@ -1,0 +1,43 @@
+name: Publish to npm
+
+# Runs when a version tag is pushed. Requires the repository secret NPM_TOKEN
+# (an npm "automation" or granular publish token for the commerceweave-mcp package).
+# Without the secret the job stops with an explicit message and publishes nothing.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write   # npm provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      HAS_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - name: Tag must match package.json version
+        run: |
+          v="v$(node -p "require('./package.json').version")"
+          if [ "$v" != "$GITHUB_REF_NAME" ]; then echo "Tag $GITHUB_REF_NAME does not match package version $v"; exit 1; fi
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Publish
+        if: env.HAS_TOKEN == 'true'
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: No token configured
+        if: env.HAS_TOKEN != 'true'
+        run: echo "NPM_TOKEN secret is not set: nothing was published."

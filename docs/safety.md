@@ -44,5 +44,5 @@ Orders are returned with masked name/e-mail/phone/login/buyer note unless the ca
 
 ## Network
 
-- WooCommerce: HTTPS required; private, loopback, link-local, CGNAT and reserved addresses are refused, DNS is re-resolved before each request. Redirects are refused. `allowInsecure` exists only for local development stores. Residual risk: a DNS rebinding race between the check and the connection (the config is operator-controlled, not model-controlled).
+- WooCommerce: HTTPS required; private, loopback, link-local, CGNAT and reserved addresses are refused, connections are DNS-pinned (the address that passes the block-list check is the address the socket connects to, so DNS rebinding cannot swap it). Redirects are refused. `allowInsecure` exists only for local development stores.
 - Platform ids are restricted to `[A-Za-z0-9_-]` and path traversal segments are rejected before any URL is built.

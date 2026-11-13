@@ -126,6 +126,13 @@ export function registerUnified(server: McpServer, ctx: Ctx) {
   });
 
   define(server, {
+    name: 'commerce_prepare_order_note', title: 'Prepare an internal order note (no write)', annotations: PROPOSE_ANNOTATIONS,
+    description: 'Records a proposal to add a short internal note (max 190 chars, plain text) to an order. WooCommerce: private staff note, never sent to the customer. Base.com: appended to the seller comment (200 char limit). Allegro is not supported. NOTHING IS CHANGED ON THE PLATFORM until a human approves.',
+    schema: z.object({ connectionId: z.string().max(32), orderId: pid, note: z.string().min(1).max(190) }),
+    run: (a, signal) => writes.prepareOrderNote(a.connectionId, a.orderId, a.note, signal),
+  });
+
+  define(server, {
     name: 'commerce_get_proposal', title: 'Show a proposal', annotations: READ_ANNOTATIONS,
     description: 'Shows a stored proposal: plan, status (pending/executing/executed/failed), expiry and execution result.',
     schema: z.object({ proposalId: z.string().regex(/^cw_[a-z0-9]{12}$/) }),

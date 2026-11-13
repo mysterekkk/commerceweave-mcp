@@ -38,7 +38,7 @@ It does not replace the official integrations. WooCommerce ships its own MCP int
 | Base.com | catalog products + variants | list / get / journal / statuses | per warehouse | per price group | stock, price, order status |
 | WooCommerce | list / search / get, variations, categories | list / get | product & variation | regular/sale | stock, regular price, order status |
 
-Unified tools: list connections, list/find products, list/get orders, low stock, inventory report, sales summary, stock discrepancies, three `prepare_*` tools, `get_proposal`, `execute_proposal`. Full list: [docs/tools.md](docs/tools.md). Not implemented yet: order notes, product creation, offer publish/end, HTTP transport.
+Unified tools: list connections, list/find products, list/get orders, low stock, inventory report, sales summary, stock discrepancies, four `prepare_*` tools (stock, price, order status, order note), `get_proposal`, `execute_proposal`. Full list: [docs/tools.md](docs/tools.md). Not implemented yet: product creation, offer publish/end, HTTP transport.
 
 ## Quick start
 

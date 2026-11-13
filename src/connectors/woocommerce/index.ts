@@ -1,6 +1,6 @@
 import { assertSafeWooUrl, type WooConfig } from '../../core/config.js';
 import { CommerceError } from '../../core/errors.js';
-import { assertResolvesPublic } from '../../core/host-guard.js';
+import { createPinnedAgent } from '../../core/host-guard.js';
 import { HttpClient } from '../../core/http.js';
 import { formatDecimal, normalizeMoney, parseDecimal } from '../../core/money.js';
 import type { CommerceOrder, CommercePrice, CommerceProduct, CommerceStore, CommerceVariant, CommerceInventory, OrderState } from '../../core/models.js';
@@ -32,8 +32,8 @@ export class WooConnector implements Connector {
     const auth = 'Basic ' + Buffer.from(`${cfg.consumerKey}:${cfg.consumerSecret}`).toString('base64');
     this.http = new HttpClient({
       connectionId: cfg.id, baseUrl: base, limiter: new RateLimiter(8, 1000), sleep: opts.sleep,
-      // Re-check DNS before every request so a public name cannot start pointing at an internal address.
-      beforeRequest: cfg.allowInsecure ? undefined : () => assertResolvesPublic(new URL(cfg.storeUrl).hostname),
+      // The connection itself is DNS-pinned: the validated address is the one connected to (no rebinding window).
+      dispatcher: cfg.allowInsecure ? undefined : createPinnedAgent(),
       defaultHeaders: () => ({ Authorization: auth, Accept: 'application/json' }),
     });
   }
@@ -178,6 +178,10 @@ export class WooConnector implements Connector {
   }
 
   async readCurrent(op: WriteOperation, signal?: AbortSignal): Promise<CurrentState> {
+    if (op.kind === 'order_note') {
+      const r = await this.http.request<J[]>({ path: `orders/${encodeURIComponent(op.orderId)}/notes`, signal });
+      return { value: String(r.data.length), noteAfter: String(r.data.length + 1), description: `order ${op.orderId} private notes (count)`, warnings: ['The note is added as a PRIVATE (staff-only) note, never sent to the customer.'] };
+    }
     if (op.kind === 'order_status') {
       const r = await this.http.request<J>({ path: `orders/${encodeURIComponent(op.orderId)}`, signal });
       return { value: String(r.data.status), description: `order #${r.data.id} status "${r.data.status}"` };
@@ -199,6 +203,10 @@ export class WooConnector implements Connector {
 
   async write(op: WriteOperation, _current: CurrentState, signal?: AbortSignal): Promise<WriteResult> {
     if (!this.writable) throw new CommerceError('MODE_FORBIDS', `Connection ${this.id} is configured read-only`, { connectionId: this.id });
+    if (op.kind === 'order_note') {
+      await this.http.request({ method: 'POST', path: `orders/${encodeURIComponent(op.orderId)}/notes`, body: JSON.stringify({ note: op.note, customer_note: false }), contentType: 'application/json', signal });
+      return { applied: true, detail: `private note added to order ${op.orderId}` };
+    }
     if (op.kind === 'order_status') {
       if (!(WOO_STATUSES as readonly string[]).includes(op.status)) throw new CommerceError('VALIDATION_FAILED', `Unknown WooCommerce status "${op.status}". Allowed: ${WOO_STATUSES.join(', ')}`);
       await this.http.request({ method: 'PUT', path: `orders/${encodeURIComponent(op.orderId)}`, body: JSON.stringify({ status: op.status }), contentType: 'application/json', signal });

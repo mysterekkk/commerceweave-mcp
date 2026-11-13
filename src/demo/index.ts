@@ -61,6 +61,8 @@ export class DemoConnector implements Connector {
       : [{ id: 'processing', name: 'processing' }, { id: 'completed', name: 'completed' }, { id: 'cancelled', name: 'cancelled' }];
   }
 
+  private notes = new Map<string, string[]>();
+
   private find(productId: string, variantId?: string): { holder: CommerceProduct | CommerceVariant } {
     const p = this.products.find((x) => x.source.externalId === productId);
     if (!p) throw new CommerceError('NOT_FOUND', `Demo product ${productId} not found`, { connectionId: this.id });
@@ -74,6 +76,11 @@ export class DemoConnector implements Connector {
   }
 
   async readCurrent(op: WriteOperation): Promise<CurrentState> {
+    if (op.kind === 'order_note') {
+      if (!this.orders.some((x) => x.source.externalId === op.orderId)) throw new CommerceError('NOT_FOUND', `Demo order ${op.orderId} not found`, { connectionId: this.id });
+      const n = (this.notes.get(op.orderId) ?? []).length;
+      return { value: String(n), noteAfter: String(n + 1), description: `[DEMO] order ${op.orderId} notes (count)` };
+    }
     if (op.kind === 'order_status') {
       const o = this.orders.find((x) => x.source.externalId === op.orderId);
       if (!o) throw new CommerceError('NOT_FOUND', `Demo order ${op.orderId} not found`, { connectionId: this.id });
@@ -87,6 +94,10 @@ export class DemoConnector implements Connector {
 
   async write(op: WriteOperation): Promise<WriteResult> {
     if (!this.writable) throw new CommerceError('MODE_FORBIDS', `Connection ${this.id} is configured read-only`, { connectionId: this.id });
+    if (op.kind === 'order_note') {
+      this.notes.set(op.orderId, [...(this.notes.get(op.orderId) ?? []), op.note]);
+      return { applied: true, detail: '[DEMO] note stored in memory' };
+    }
     if (op.kind === 'order_status') {
       const o = this.orders.find((x) => x.source.externalId === op.orderId);
       if (!o) throw new CommerceError('NOT_FOUND', 'order not found', { connectionId: this.id });

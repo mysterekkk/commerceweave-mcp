@@ -8,6 +8,14 @@ import { log } from '../core/logging.js';
 
 export const MAX_OPS_PER_PROPOSAL = 25;
 
+function hasControlChars(s: string): boolean {
+  for (const ch of s) {
+    const c = ch.codePointAt(0) as number;
+    if ((c < 32 && c !== 9 && c !== 10) || c === 127) return true;
+  }
+  return false;
+}
+
 /** Numeric-aware comparison so "39.9" equals "39.90"; falls back to exact string equality. */
 export function sameValue(a: string, b: string): boolean {
   try {
@@ -102,6 +110,16 @@ export class Writes {
     const before = await c.readCurrent(op, signal);
     const name = allowed?.find((s) => s.id === status)?.name ?? status;
     return this.finish(c, `Change status of order ${orderId} in ${c.id}`, [{ op, before, expectedAfter: status, label: `order ${orderId} — ${before.description}`, beforeDisplay: before.value, afterDisplay: `${status}${name !== status ? ` (${name})` : ''}` }], before.warnings ?? []);
+  }
+
+  async prepareOrderNote(connectionId: string, orderId: string, note: string, signal?: AbortSignal) {
+    const c = this.reg.get(connectionId);
+    this.guard(c, 1);
+    if (!note.trim() || note.length > 190 || hasControlChars(note)) throw new CommerceError('VALIDATION_FAILED', 'Note must be 1..190 characters of plain text.');
+    const op: WriteOperation = { kind: 'order_note', orderId, note: note.trim() };
+    const before = await c.readCurrent(op, signal);
+    const after = before.noteAfter as string;
+    return this.finish(c, `Add a note to order ${orderId} in ${c.id}`, [{ op, before, expectedAfter: after, label: `order ${orderId} — ${before.description}`, beforeDisplay: before.value === '' ? '(empty)' : before.value, afterDisplay: `+ "${op.note}"` }], before.warnings ?? []);
   }
 
   /** Executes a human-approved proposal exactly once. */

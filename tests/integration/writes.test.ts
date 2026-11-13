@@ -188,6 +188,25 @@ describe('write safety: modes, approvals, execution', () => {
     expect(woo.state.orders[0].status).toBe('completed');
   });
 
+  it('order notes: Woo adds a PRIVATE note; Base appends within 200 chars; both verified by read-back', async () => {
+    const { writes, store } = build('approval_required');
+    const pw = await writes.prepareOrderNote('woo', '501', 'Call buyer before shipping', undefined);
+    expect(pw.warnings.join(' ')).toMatch(/PRIVATE/);
+    store.recordHumanApproval(pw.proposalId);
+    expect((await writes.execute(pw.proposalId)).status).toBe('executed');
+    const post = woo.calls.find((c) => c.method === 'POST' && c.path.endsWith('/orders/501/notes'))!;
+    expect(post.body).toEqual({ note: 'Call buyer before shipping', customer_note: false });
+
+    const pb = await writes.prepareOrderNote('base', '9001', 'packed by Ola', undefined);
+    store.recordHumanApproval(pb.proposalId);
+    expect((await writes.execute(pb.proposalId)).status).toBe('executed');
+    expect(base.state.orders[0].admin_comments).toBe('packed by Ola');
+    const again = await writes.prepareOrderNote('base', '9001', 'second', undefined);
+    expect(again.changes[0]?.after).toContain('second');
+    expect(await code(writes.prepareOrderNote('base', '9001', 'x'.repeat(190)))).toBe('VALIDATION_FAILED'); // would exceed Base's 200 limit
+    expect(await code(writes.prepareOrderNote('woo', '501', 'badnote'))).toBe('VALIDATION_FAILED');
+  });
+
   it('writes are never retried: a 500 on the PUT yields WRITE_OUTCOME_UNKNOWN after exactly one attempt', async () => {
     const { reg } = build('approval_required');
     const c = reg.get('woo');

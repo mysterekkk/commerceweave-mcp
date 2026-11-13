@@ -99,6 +99,14 @@ export async function startFakeWoo(): Promise<FakeServer> {
       if (m === 'PUT') Object.assign(o, body);
       return json(res, 200, o);
     }
+    mm = /^orders\/(\d+)\/notes$/.exec(p);
+    if (mm) {
+      const o = fx.orders.find((x) => x.id === Number(mm?.[1]));
+      if (!o) return json(res, 404, {});
+      o.notes ??= [];
+      if (m === 'POST') { o.notes.push({ id: o.notes.length + 1, note: body.note, customer_note: body.customer_note }); return json(res, 201, o.notes.at(-1)); }
+      return json(res, 200, o.notes);
+    }
     if (p === 'reports/sales') return json(res, 200, [{ total_sales: '79.80', net_sales: '79.80', total_orders: 1, total_items: 2 }]);
     json(res, 404, { code: 'rest_no_route' });
   });

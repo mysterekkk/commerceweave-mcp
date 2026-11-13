@@ -38,7 +38,7 @@ Projekt nie zastępuje oficjalnych integracji. WooCommerce ma własną integracj
 | Base.com | produkty katalogu + warianty | lista / szczegóły / dziennik / statusy | per magazyn | per grupa cenowa | stan, cena, status zamówienia |
 | WooCommerce | lista / szukanie / szczegóły, warianty, kategorie | lista / szczegóły | produkt i wariant | regularna/promocyjna | stan, cena regularna, status zamówienia |
 
-Narzędzia ujednolicone: lista połączeń, lista/wyszukiwanie produktów, lista/szczegóły zamówień, niskie stany, raport magazynowy, podsumowanie sprzedaży, rozbieżności stanów, trzy narzędzia `prepare_*`, `get_proposal`, `execute_proposal`. Pełna lista: [docs/tools.md](docs/tools.md). Jeszcze niezaimplementowane: notatki do zamówień, tworzenie produktów, publikacja/zakończenie ofert, transport HTTP.
+Narzędzia ujednolicone: lista połączeń, lista/wyszukiwanie produktów, lista/szczegóły zamówień, niskie stany, raport magazynowy, podsumowanie sprzedaży, rozbieżności stanów, cztery narzędzia `prepare_*` (stan, cena, status, notatka), `get_proposal`, `execute_proposal`. Pełna lista: [docs/tools.md](docs/tools.md). Jeszcze niezaimplementowane: tworzenie produktów, publikacja/zakończenie ofert, transport HTTP.
 
 ## Szybki start
 
