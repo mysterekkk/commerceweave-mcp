@@ -218,8 +218,38 @@ export class BaseConnector implements Connector {
     throw new CommerceError('AMBIGUOUS_TARGET', `Connection ${this.id} has ${invs.length} catalogs (${invs.map((i) => i.inventory_id).join(', ')}); specify catalogId.`, { connectionId: this.id });
   }
 
+  /** Resolves catalog, price group and (if stock is given) warehouse; several candidates must be chosen explicitly. */
+  private async draftTarget(op: Extract<WriteOperation, { kind: 'product_draft' }>, signal?: AbortSignal) {
+    const inventory = await this.pickInventory(op, signal);
+    const inv = (await this.inventories(signal)).find((i) => String(i.inventory_id) === inventory) as J;
+    const groups: string[] = (inv.price_groups ?? []).map(String);
+    const priceGroup = op.priceGroup ?? (groups.length === 1 ? groups[0] : undefined);
+    if (!priceGroup) throw new CommerceError('AMBIGUOUS_TARGET', `Catalog ${inventory} has ${groups.length} price groups (${groups.join(', ')}); specify priceGroup.`, { connectionId: this.id });
+    if (!groups.includes(priceGroup)) throw new CommerceError('NOT_FOUND', `Price group ${priceGroup} is not part of catalog ${inventory}`, { connectionId: this.id });
+    let warehouse: string | undefined;
+    if (op.stockQuantity !== undefined) {
+      const whs: string[] = (inv.warehouses ?? []).map(String).filter((w: string) => w.startsWith('bl_'));
+      warehouse = op.locationId ?? (whs.length === 1 ? whs[0] : undefined);
+      if (!warehouse) throw new CommerceError('AMBIGUOUS_TARGET', `Catalog ${inventory} has ${whs.length} stock-editable warehouses (${whs.join(', ')}); specify locationId.`, { connectionId: this.id });
+      if (!whs.includes(warehouse)) throw new CommerceError('NOT_FOUND', `Warehouse ${warehouse} is not editable in catalog ${inventory}`, { connectionId: this.id });
+    }
+    return { inventory, priceGroup, warehouse };
+  }
+
   async readCurrent(op: WriteOperation, signal?: AbortSignal): Promise<CurrentState> {
-    if (op.kind === 'offer_publication' || op.kind === 'product_draft') throw new CommerceError('NOT_SUPPORTED', `${op.kind} is not supported for Base.com.`, { connectionId: this.id });
+    if (op.kind === 'offer_publication') throw new CommerceError('NOT_SUPPORTED', 'Offer publication is an Allegro concept.', { connectionId: this.id });
+    if (op.kind === 'product_draft') {
+      const t = await this.draftTarget(op, signal);
+      const r = await this.call<J>('getInventoryProductsList', { inventory_id: intId(t.inventory, 'catalogId'), filter_sku: op.sku }, false, signal);
+      const exists = Object.values(r.products ?? {}).some((p) => (p as J).sku === op.sku);
+      return {
+        value: exists ? 'exists' : 'absent', noteAfter: 'exists', description: `product with SKU "${op.sku}" in Base catalog ${t.inventory}`, currency: null,
+        warnings: [
+          exists ? 'A product with this SKU already exists in the catalog; creation will be refused.' : `Creates a catalog product in Base catalog ${t.inventory} (price group ${t.priceGroup}${op.stockQuantity !== undefined ? `, warehouse ${t.warehouse}` : ''}). It is not linked to any marketplace or shop listing.`,
+          'VAT rate and other attributes are left to the catalog defaults; the price currency is defined by the Base price group.',
+        ],
+      };
+    }
     if (op.kind === 'order_note') {
       const r = await this.call<J>('getOrders', { order_id: intId(op.orderId, 'orderId'), get_unconfirmed_orders: true }, false, signal);
       const o = (r.orders ?? [])[0];
@@ -258,7 +288,18 @@ ${op.note}` : op.note;
 
   async write(op: WriteOperation, _current: CurrentState, signal?: AbortSignal): Promise<WriteResult> {
     if (!this.writable) throw new CommerceError('MODE_FORBIDS', `Connection ${this.id} is configured read-only`, { connectionId: this.id });
-    if (op.kind === 'offer_publication' || op.kind === 'product_draft') throw new CommerceError('NOT_SUPPORTED', `${op.kind} is not supported for Base.com.`, { connectionId: this.id });
+    if (op.kind === 'offer_publication') throw new CommerceError('NOT_SUPPORTED', 'Offer publication is an Allegro concept.', { connectionId: this.id });
+    if (op.kind === 'product_draft') {
+      const t = await this.draftTarget(op, signal);
+      const params: Record<string, unknown> = {
+        inventory_id: intId(t.inventory, 'catalogId'), sku: op.sku, text_fields: { name: op.name },
+        prices: { [t.priceGroup]: Number(formatDecimal(parseDecimal(op.regularPrice), 2)) },
+      };
+      if (op.stockQuantity !== undefined) params.stock = { [t.warehouse as string]: op.stockQuantity };
+      const r = await this.call<J>('addInventoryProduct', params, true, signal);
+      const warn = r.warnings && Object.keys(r.warnings).length ? ` warnings: ${JSON.stringify(r.warnings)}` : '';
+      return { applied: true, detail: `product ${r.product_id} created in catalog ${t.inventory}${warn}` };
+    }
     if (op.kind === 'order_note') {
       const cur = await this.readCurrent(op, signal);
       await this.call('setOrderFields', { order_id: intId(op.orderId, 'orderId'), admin_comments: cur.noteAfter }, true, signal);

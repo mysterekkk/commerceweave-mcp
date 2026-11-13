@@ -50,6 +50,12 @@ export async function startFakeBase(opts: { rateLimitFirst?: number } = {}): Pro
         for (const [id, prices] of Object.entries<any>(params.products)) Object.assign(fx.products[id].prices, prices);
         return json(res, 200, { status: 'SUCCESS', counter: Object.keys(params.products).length, warnings: {} });
       }
+      case 'addInventoryProduct': {
+        if (params.product_id) return json(res, 200, { status: 'ERROR', error_code: 'ERROR_UNEXPECTED', error_message: 'update not expected in tests' });
+        const id = 3000 + Object.keys(fx.products).length;
+        fx.products[String(id)] = { id, parent_id: 0, ean: '', sku: params.sku, name: params.text_fields?.name ?? '', prices: params.prices ?? {}, stock: params.stock ?? {} };
+        return json(res, 200, { status: 'SUCCESS', product_id: id, warnings: {} });
+      }
       case 'setOrderFields': {
         const o = fx.orders.find((x) => x.order_id === params.order_id);
         if (!o) return json(res, 200, { status: 'ERROR', error_code: 'ERROR_ORDER_ID', error_message: 'Order not found' });

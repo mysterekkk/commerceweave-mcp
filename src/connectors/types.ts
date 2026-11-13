@@ -37,8 +37,11 @@ export type WriteOperation =
   | { kind: 'order_note'; orderId: string; note: string }
   /** Allegro: start (ACTIVATE) or end (END) the publication of an offer. */
   | { kind: 'offer_publication'; offerId: string; action: 'ACTIVATE' | 'END' }
-  /** WooCommerce: create a simple product in DRAFT status (never published). `sku` is mandatory so the result is identifiable. */
-  | { kind: 'product_draft'; sku: string; name: string; regularPrice: string; stockQuantity?: number };
+  /**
+   * Create a NEW product that is not live anywhere yet. WooCommerce: simple product with status draft.
+   * Base.com: product in a catalog (not linked to any marketplace/shop listing). `sku` is mandatory so the result is identifiable.
+   */
+  | { kind: 'product_draft'; sku: string; name: string; regularPrice: string; stockQuantity?: number; catalogId?: string; priceGroup?: string; locationId?: string };
 
 export interface CurrentState {
   /** Opaque, comparable snapshot of the field being changed. */

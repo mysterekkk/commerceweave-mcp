@@ -28,6 +28,10 @@ There is **no** generic "call any endpoint" tool, no bulk delete, no tool that c
 - Execution verification reads back through the same API; it cannot detect a platform that silently reverts a value later.
 - A timeout during a write yields `WRITE_OUTCOME_UNKNOWN`. Check the platform before creating a new proposal.
 
+## HTTP transport
+
+`commerceweave-mcp serve-http` is optional; stdio remains the default. It never starts without `COMMERCEWEAVE_HTTP_TOKEN` (>= 32 chars), binds loopback by default, checks Host and Origin headers, serves only `/mcp`, compares the token in constant time and throttles wrong credentials. HTTP clients can read and propose but cannot approve: approval is the terminal command. Details: [http.md](http.md).
+
 ## Untrusted data and prompt injection
 
 Product descriptions, buyer notes and other free text are returned under `untrustedText` and every such response carries a `securityNotice`. The server never interprets that text; it cannot change mode, targets or approvals because none of those decisions read platform data.

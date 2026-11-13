@@ -190,7 +190,7 @@ export class WooConnector implements Connector {
     if (op.kind === 'product_draft') {
       const r = await this.http.request<J[]>({ path: 'products', query: { sku: op.sku, status: 'any', per_page: 1 }, signal });
       const hit = r.data[0];
-      return { value: hit ? `exists:${hit.status}` : 'absent', description: `product with SKU "${op.sku}"`, currency: await this.getCurrency(signal), warnings: [hit ? `A product with this SKU already exists (status ${hit.status}); creation will be refused.` : 'Created as a DRAFT: it is not visible in the shop until you publish it in WooCommerce yourself.'] };
+      return { value: hit ? `exists:${hit.status}` : 'absent', noteAfter: 'exists:draft', description: `product with SKU "${op.sku}"`, currency: await this.getCurrency(signal), warnings: [hit ? `A product with this SKU already exists (status ${hit.status}); creation will be refused.` : 'Created as a DRAFT: it is not visible in the shop until you publish it in WooCommerce yourself.'] };
     }
     const t = this.target(op);
     const r = await this.http.request<J>({ path: t.path, signal });

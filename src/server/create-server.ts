@@ -12,7 +12,7 @@ import { Writes } from '../unified/writes.js';
 import { DEMO_NOTICE } from '../demo/index.js';
 
 export const SERVER_NAME = 'commerceweave-mcp';
-export const SERVER_VERSION = '0.2.0';
+export const SERVER_VERSION = '0.3.0';
 
 export function createContext(settings: Settings, reg: Registry = buildRegistry(settings)): Ctx {
   const store = new ApprovalStore(settings.home, settings.approvalTtlMs);

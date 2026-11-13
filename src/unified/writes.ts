@@ -124,7 +124,7 @@ export class Writes {
     return this.finish(c, `${action === 'ACTIVATE' ? 'Publish' : 'End'} offer ${offerId} in ${c.id}`, [{ op, before, expectedAfter: after, label: `offer ${offerId} — ${before.description}`, beforeDisplay: before.value, afterDisplay: after }], before.warnings ?? []);
   }
 
-  async prepareProductDraft(connectionId: string, d: { sku: string; name: string; regularPrice: string; stockQuantity?: number }, signal?: AbortSignal) {
+  async prepareProductDraft(connectionId: string, d: { sku: string; name: string; regularPrice: string; stockQuantity?: number; catalogId?: string; priceGroup?: string; locationId?: string }, signal?: AbortSignal) {
     const c = this.reg.get(connectionId);
     this.guard(c, 1);
     if (!/^[A-Za-z0-9._-]{1,64}$/.test(d.sku)) throw new CommerceError('VALIDATION_FAILED', 'sku must be 1..64 characters of letters, digits, dot, dash or underscore.');
@@ -132,11 +132,11 @@ export class Writes {
     const price = roundDecimal(parseDecimal(d.regularPrice), 2);
     if (price <= 0n) throw new CommerceError('VALIDATION_FAILED', 'regularPrice must be greater than 0.');
     if (d.stockQuantity !== undefined && (!Number.isInteger(d.stockQuantity) || d.stockQuantity < 0 || d.stockQuantity > 1_000_000)) throw new CommerceError('VALIDATION_FAILED', 'stockQuantity must be an integer between 0 and 1000000.');
-    const op: WriteOperation = { kind: 'product_draft', sku: d.sku, name: d.name.trim(), regularPrice: formatDecimal(price, 2), stockQuantity: d.stockQuantity };
+    const op: WriteOperation = { kind: 'product_draft', sku: d.sku, name: d.name.trim(), regularPrice: formatDecimal(price, 2), stockQuantity: d.stockQuantity, catalogId: d.catalogId, priceGroup: d.priceGroup, locationId: d.locationId };
     const before = await c.readCurrent(op, signal);
     if (before.value !== 'absent') throw new CommerceError('VALIDATION_FAILED', `A product with SKU "${d.sku}" already exists on ${c.id}; drafts never overwrite products.`, { connectionId: c.id });
-    const shown = `DRAFT "${op.name}" sku ${op.sku} price ${op.regularPrice} ${before.currency ?? ''}${op.stockQuantity !== undefined ? ` stock ${op.stockQuantity}` : ''}`.replace(/ +/g, ' ').trim();
-    return this.finish(c, `Create draft product ${op.sku} in ${c.id}`, [{ op, before, expectedAfter: 'exists:draft', label: `new product — ${before.description}`, beforeDisplay: '(does not exist)', afterDisplay: shown }], before.warnings ?? []);
+    const shown = `NEW ${c.platform === 'woocommerce' ? 'DRAFT ' : ''}"${op.name}" sku ${op.sku} price ${op.regularPrice} ${before.currency ?? ''}${op.stockQuantity !== undefined ? ` stock ${op.stockQuantity}` : ''}`.replace(/ +/g, ' ').trim();
+    return this.finish(c, `Create draft product ${op.sku} in ${c.id}`, [{ op, before, expectedAfter: before.noteAfter ?? 'exists:draft', label: `new product — ${before.description}`, beforeDisplay: '(does not exist)', afterDisplay: shown }], before.warnings ?? []);
   }
 
   /** Executes a human-approved proposal exactly once. */

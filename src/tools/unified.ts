@@ -140,10 +140,10 @@ export function registerUnified(server: McpServer, ctx: Ctx) {
   });
 
   define(server, {
-    name: 'commerce_prepare_product_draft', title: 'Prepare a WooCommerce draft product (no write)', annotations: PROPOSE_ANNOTATIONS,
-    description: 'Records a proposal to create a simple product in DRAFT status on WooCommerce (never published; SKU required and must not exist yet). NOTHING IS CREATED UNTIL A HUMAN APPROVES.',
-    schema: z.object({ connectionId: z.string().max(32), sku: z.string().regex(/^[A-Za-z0-9._-]{1,64}$/), name: z.string().min(1).max(150), regularPrice: z.string().regex(/^\d{1,9}(\.\d{1,6})?$/), stockQuantity: z.number().int().min(0).max(1_000_000).optional() }),
-    run: (a, signal) => writes.prepareProductDraft(a.connectionId, { sku: a.sku, name: a.name, regularPrice: a.regularPrice, stockQuantity: a.stockQuantity }, signal),
+    name: 'commerce_prepare_product_draft', title: 'Prepare a new product (no write)', annotations: PROPOSE_ANNOTATIONS,
+    description: 'Records a proposal to create a NEW product that is not live anywhere: WooCommerce = simple product in DRAFT status; Base.com = catalog product not linked to any marketplace (catalogId / priceGroup / locationId required when several exist). SKU is required and must not exist yet; existing products are never updated. NOTHING IS CREATED UNTIL A HUMAN APPROVES.',
+    schema: z.object({ connectionId: z.string().max(32), sku: z.string().regex(/^[A-Za-z0-9._-]{1,64}$/), name: z.string().min(1).max(150), regularPrice: z.string().regex(/^\d{1,9}(\.\d{1,6})?$/), stockQuantity: z.number().int().min(0).max(1_000_000).optional(), catalogId: z.string().regex(/^[A-Za-z0-9_-]{1,32}$/).optional(), priceGroup: z.string().regex(/^[A-Za-z0-9_-]{1,32}$/).optional(), locationId: z.string().regex(/^[A-Za-z0-9_-]{1,32}$/).optional() }),
+    run: (a, signal) => writes.prepareProductDraft(a.connectionId, { sku: a.sku, name: a.name, regularPrice: a.regularPrice, stockQuantity: a.stockQuantity, catalogId: a.catalogId, priceGroup: a.priceGroup, locationId: a.locationId }, signal),
   });
 
   define(server, {

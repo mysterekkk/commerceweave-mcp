@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0
+
+- **Streamable HTTP transport** (`commerceweave-mcp serve-http`): mandatory bearer token (min 32 chars, constant-time check), loopback bind by default, Host/Origin validation against DNS rebinding, `/mcp` only, throttling of wrong credentials (never locks out the valid token), refuses non-loopback binds without an explicit opt-in and allowed hosts. Approvals stay a terminal-only human action, so HTTP clients cannot approve writes.
+- **Base.com product creation** through the same approved-proposal flow (`addInventoryProduct`; new products only, never updates, SKU must not exist, catalog/price group/warehouse must be explicit when ambiguous).
+
 ## 0.2.0
 
 - New approved proposal types: Allegro offer publish/end (`commerce_prepare_offer_publication`, async publication command API) and WooCommerce DRAFT product creation (`commerce_prepare_product_draft`, SKU required, never overwrites, never published).

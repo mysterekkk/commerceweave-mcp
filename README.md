@@ -14,7 +14,7 @@
 
 **One MCP server. Three commerce platforms.**
 
-Connect AI agents to **Allegro**, **Base.com** and **WooCommerce** through one secure, self-hosted [MCP](https://modelcontextprotocol.io) server. It runs on your machine over stdio: no VPS, no database, no SaaS account.
+Connect AI agents to **Allegro**, **Base.com** and **WooCommerce** through one secure, self-hosted [MCP](https://modelcontextprotocol.io) server. It runs on your machine over stdio (an authenticated HTTP mode is optional): no VPS, no database, no SaaS account.
 
 > Status: **v0.1.0, validated against local servers that implement each platform's documented protocol, not yet against live accounts.** See [what is and is not tested](docs/api-compatibility.md#live-testing-status).
 
@@ -39,7 +39,7 @@ It does not replace the official integrations. WooCommerce ships its own MCP int
 | Base.com | catalog products + variants | list / get / journal / statuses | per warehouse | per price group | stock, price, order status |
 | WooCommerce | list / search / get, variations, categories | list / get | product & variation | regular/sale | stock, regular price, order status |
 
-Unified tools: list connections, list/find products, list/get orders, low stock, inventory report, sales summary, stock discrepancies, six `prepare_*` tools (stock, price, order status, order note, offer publication, product draft), `get_proposal`, `execute_proposal`. Full list: [docs/tools.md](docs/tools.md). Also: Allegro offer publish/end and WooCommerce draft products (both via approved proposals). Not implemented: HTTP transport (stdio only, by design), Base.com product creation.
+Unified tools: list connections, list/find products, list/get orders, low stock, inventory report, sales summary, stock discrepancies, six `prepare_*` tools (stock, price, order status, order note, offer publication, product draft), `get_proposal`, `execute_proposal`. Full list: [docs/tools.md](docs/tools.md). Also via approved proposals: Allegro offer publish/end, new products (WooCommerce draft, Base.com catalog product). Transports: stdio (default) and authenticated Streamable HTTP ([docs](docs/http.md)).
 
 ## Quick start
 
@@ -92,7 +92,7 @@ Token storage: Allegro OAuth tokens are kept in a `0600` JSON file under `~/.com
 
 ## Documentation
 
-[Setup per platform](docs/setup.md) · [Tool reference](docs/tools.md) · [Safety](docs/safety.md) · [Architecture](docs/architecture.md) · [API compatibility & sources](docs/api-compatibility.md) · [Landscape](docs/competition.md) · [Troubleshooting](docs/troubleshooting.md) · [MCP Registry](docs/registry.md) · [Security policy](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
+[Setup per platform](docs/setup.md) · [HTTP transport](docs/http.md) · [Tool reference](docs/tools.md) · [Safety](docs/safety.md) · [Architecture](docs/architecture.md) · [API compatibility & sources](docs/api-compatibility.md) · [Landscape](docs/competition.md) · [Troubleshooting](docs/troubleshooting.md) · [MCP Registry](docs/registry.md) · [Security policy](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
 
 ## Data protection
 

@@ -14,6 +14,7 @@ export const HELP = `commerceweave-mcp ${SERVER_VERSION} — one MCP server, thr
 
 Usage:
   commerceweave-mcp                    Start the MCP server on stdio (what MCP clients run)
+  commerceweave-mcp serve-http         Start the Streamable HTTP server (needs COMMERCEWEAVE_HTTP_TOKEN; loopback only by default)
   commerceweave-mcp doctor             Check configuration and connectivity (never prints secrets)
   commerceweave-mcp check              Validate configuration only (no network)
   commerceweave-mcp list-connections   Show configured connections

@@ -14,7 +14,7 @@
 
 **Jeden serwer MCP. Trzy platformy sprzedażowe.**
 
-Podłącz agentów AI do **Allegro**, **Base.com** i **WooCommerce** przez jeden bezpieczny, lokalny serwer [MCP](https://modelcontextprotocol.io). Działa na Twoim komputerze przez stdio: bez VPS, bez bazy danych, bez konta w usłudze SaaS.
+Podłącz agentów AI do **Allegro**, **Base.com** i **WooCommerce** przez jeden bezpieczny, lokalny serwer [MCP](https://modelcontextprotocol.io). Działa na Twoim komputerze przez stdio (opcjonalnie także przez uwierzytelniany HTTP): bez VPS, bez bazy danych, bez konta w usłudze SaaS.
 
 > Status: **v0.1.0. Zweryfikowano na lokalnych serwerach implementujących udokumentowany protokół każdej platformy, jeszcze nie na prawdziwych kontach.** Zobacz [co jest, a czego nie ma w testach](docs/api-compatibility.md#live-testing-status).
 
@@ -39,7 +39,7 @@ Projekt nie zastępuje oficjalnych integracji. WooCommerce ma własną integracj
 | Base.com | produkty katalogu + warianty | lista / szczegóły / dziennik / statusy | per magazyn | per grupa cenowa | stan, cena, status zamówienia |
 | WooCommerce | lista / szukanie / szczegóły, warianty, kategorie | lista / szczegóły | produkt i wariant | regularna/promocyjna | stan, cena regularna, status zamówienia |
 
-Narzędzia ujednolicone: lista połączeń, lista/wyszukiwanie produktów, lista/szczegóły zamówień, niskie stany, raport magazynowy, podsumowanie sprzedaży, rozbieżności stanów, sześć narzędzi `prepare_*` (stan, cena, status, notatka, publikacja oferty, szkic produktu), `get_proposal`, `execute_proposal`. Pełna lista: [docs/tools.md](docs/tools.md). Dodatkowo: publikacja/zakończenie ofert Allegro i szkice produktów WooCommerce (oba przez zatwierdzane propozycje). Niezaimplementowane: transport HTTP (tylko stdio, świadomie), tworzenie produktów w Base.com.
+Narzędzia ujednolicone: lista połączeń, lista/wyszukiwanie produktów, lista/szczegóły zamówień, niskie stany, raport magazynowy, podsumowanie sprzedaży, rozbieżności stanów, sześć narzędzi `prepare_*` (stan, cena, status, notatka, publikacja oferty, szkic produktu), `get_proposal`, `execute_proposal`. Pełna lista: [docs/tools.md](docs/tools.md). Dodatkowo przez zatwierdzane propozycje: publikacja/zakończenie ofert Allegro, nowe produkty (szkic w WooCommerce, produkt katalogu w Base.com). Transporty: stdio (domyślny) i Streamable HTTP z uwierzytelnianiem ([dokumentacja](docs/http.md)).
 
 ## Szybki start
 
@@ -92,7 +92,7 @@ Tokeny: tokeny OAuth Allegro są zapisywane w pliku JSON z uprawnieniami `0600` 
 
 ## Dokumentacja
 
-[Konfiguracja platform](docs/setup.md) · [Lista narzędzi](docs/tools.md) · [Bezpieczeństwo](docs/safety.md) · [Architektura](docs/architecture.md) · [Zgodność z API i źródła](docs/api-compatibility.md) · [Przegląd rynku](docs/competition.md) · [Rozwiązywanie problemów](docs/troubleshooting.md) · [Rejestr MCP](docs/registry.md) · [Polityka bezpieczeństwa](SECURITY.md) · [Współtworzenie](CONTRIBUTING.md) · [Historia zmian](CHANGELOG.md)
+[Konfiguracja platform](docs/setup.md) · [Transport HTTP](docs/http.md) · [Lista narzędzi](docs/tools.md) · [Bezpieczeństwo](docs/safety.md) · [Architektura](docs/architecture.md) · [Zgodność z API i źródła](docs/api-compatibility.md) · [Przegląd rynku](docs/competition.md) · [Rozwiązywanie problemów](docs/troubleshooting.md) · [Rejestr MCP](docs/registry.md) · [Polityka bezpieczeństwa](SECURITY.md) · [Współtworzenie](CONTRIBUTING.md) · [Historia zmian](CHANGELOG.md)
 
 (Dokumentacja szczegółowa jest po angielsku.)
 

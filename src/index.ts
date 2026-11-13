@@ -2,6 +2,7 @@ import { HELP, cmdApprove, cmdCheck, cmdDoctor, cmdListConnections, cmdProposals
 import { loadSettings } from './core/config.js';
 import { toCommerceError } from './core/errors.js';
 import { log, setLogLevel } from './core/logging.js';
+import { loadHttpOptions, startHttp } from './server/http.js';
 import { runStdio } from './server/stdio.js';
 import { SERVER_VERSION } from './server/create-server.js';
 
@@ -18,6 +19,13 @@ async function main(): Promise<number> {
     case 'serve':
       runStdio(settings);
       return -1; // keep running
+    case 'serve-http': {
+      const http = await startHttp(settings, loadHttpOptions());
+      const stop = () => void http.close().then(() => process.exit(0));
+      process.once('SIGINT', stop);
+      process.once('SIGTERM', stop);
+      return -1;
+    }
     case 'check': return cmdCheck(settings);
     case 'doctor': return cmdDoctor(settings);
     case 'list-connections': return cmdListConnections(settings);
