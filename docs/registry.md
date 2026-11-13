@@ -10,7 +10,7 @@
 
 ## Status
 
-npm: **published** as `commerceweave-mcp@0.1.2`. Registry: **published** as `io.github.mysterekkk/commerceweave-mcp` 0.1.2. The registry validates that the npm package exists and carries the matching `mcpName`, so the order is:
+npm: **published** as `commerceweave-mcp@0.3.0`. Registry: **published** as `io.github.mysterekkk/commerceweave-mcp` 0.3.0. The registry validates that the npm package exists and carries the matching `mcpName`, so the order is:
 
 1. `npm login` (needs your npm account and 2FA), then `npm publish` (version in `package.json` must match `server.json`).
 2. Install the registry's `mcp-publisher` CLI (see https://github.com/modelcontextprotocol/registry), run `mcp-publisher login github`, then `mcp-publisher publish` from the repository root.
