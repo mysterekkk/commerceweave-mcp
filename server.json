@@ -5,13 +5,13 @@
   "description": "One local MCP server for Allegro, Base.com and WooCommerce: read-only by default, human-approved writes.",
   "websiteUrl": "https://github.com/mysterekkk/commerceweave-mcp",
   "repository": { "url": "https://github.com/mysterekkk/commerceweave-mcp", "source": "github" },
-  "version": "0.1.1",
+  "version": "0.1.2",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "commerceweave-mcp",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "transport": { "type": "stdio" },
       "environmentVariables": [
         { "name": "COMMERCEWEAVE_MODE", "description": "read_only (default) | proposal | approval_required", "isRequired": false, "default": "read_only" },

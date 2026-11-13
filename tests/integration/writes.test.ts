@@ -204,7 +204,9 @@ describe('write safety: modes, approvals, execution', () => {
     const again = await writes.prepareOrderNote('base', '9001', 'second', undefined);
     expect(again.changes[0]?.after).toContain('second');
     expect(await code(writes.prepareOrderNote('base', '9001', 'x'.repeat(190)))).toBe('VALIDATION_FAILED'); // would exceed Base's 200 limit
-    expect(await code(writes.prepareOrderNote('woo', '501', 'badnote'))).toBe('VALIDATION_FAILED');
+    expect(await code(writes.prepareOrderNote('woo', '501', 'bad'+String.fromCharCode(1)+'note'))).toBe('VALIDATION_FAILED');
+    expect(await code(writes.prepareOrderNote('woo', '501', 'line1'+String.fromCharCode(10)+'line2'))).toBe('VALIDATION_FAILED'); // no line breaks: cannot forge approval-screen lines
+    expect(await code(writes.prepareOrderNote('base', '9001abc', 'x'))).toBe('VALIDATION_FAILED'); // Base ids are plain integers
   });
 
   it('writes are never retried: a 500 on the PUT yields WRITE_OUTCOME_UNKNOWN after exactly one attempt', async () => {

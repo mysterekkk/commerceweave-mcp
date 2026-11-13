@@ -23,6 +23,12 @@ export function baseApiError(connectionId: string, method: string, code: string,
   return new CommerceError('VALIDATION_FAILED', `Base API error on ${method} [${code}]: ${message}`, d);
 }
 
+/** Base ids are plain integers. Reject anything else instead of letting Number() turn it into NaN or another id. */
+export function intId(v: string | undefined, what: string): number {
+  if (v === undefined || !/^[0-9]{1,12}$/.test(v)) throw new CommerceError('VALIDATION_FAILED', `${what} must be a plain integer for Base.com (got ${JSON.stringify(v)})`);
+  return Number(v);
+}
+
 export class BaseConnector implements Connector {
   readonly platform = 'baselinker' as const;
   readonly demo = false;
@@ -73,17 +79,17 @@ export class BaseConnector implements Connector {
   }
 
   async getStockRaw(inventoryId: string, productId?: string, page = 1, signal?: AbortSignal) {
-    const r = await this.call<J>('getInventoryProductsStock', { inventory_id: Number(inventoryId), page, ...(productId ? { filter_id: Number(productId) } : {}) }, false, signal);
+    const r = await this.call<J>('getInventoryProductsStock', { inventory_id: intId(inventoryId, 'catalogId'), page, ...(productId ? { filter_id: intId(productId, 'productId') } : {}) }, false, signal);
     return Object.values(r.products ?? {}) as J[];
   }
 
   async getPricesRaw(inventoryId: string, page = 1, signal?: AbortSignal) {
-    const r = await this.call<J>('getInventoryProductsPrices', { inventory_id: Number(inventoryId), page }, false, signal);
+    const r = await this.call<J>('getInventoryProductsPrices', { inventory_id: intId(inventoryId, 'catalogId'), page }, false, signal);
     return Object.values(r.products ?? {}) as J[];
   }
 
   async getJournal(lastLogId: number, orderId?: string, types?: number[], signal?: AbortSignal) {
-    const r = await this.call<J>('getJournalList', { last_log_id: lastLogId, ...(orderId ? { order_id: Number(orderId) } : {}), ...(types ? { logs_types: types } : {}) }, false, signal);
+    const r = await this.call<J>('getJournalList', { last_log_id: lastLogId, ...(orderId ? { order_id: intId(orderId, 'orderId') } : {}), ...(types ? { logs_types: types } : {}) }, false, signal);
     return (r.logs ?? []).map((l: J) => ({ logId: Number(l.log_id ?? l.id), orderId: String(l.order_id), type: Number(l.log_type), objectId: String(l.object_id ?? ''), at: new Date(Number(l.date) * 1000).toISOString() }));
   }
 
@@ -195,8 +201,9 @@ export class BaseConnector implements Connector {
   }
 
   async getOrder(orderId: string, pii: boolean, signal?: AbortSignal): Promise<CommerceOrder> {
-    const r = await this.call<J>('getOrders', { order_id: Number(orderId), get_unconfirmed_orders: true }, false, signal);
+    const r = await this.call<J>('getOrders', { order_id: intId(orderId, 'orderId'), get_unconfirmed_orders: true }, false, signal);
     const o = (r.orders ?? [])[0];
+    if (o && String(o.order_id) !== String(orderId)) throw new CommerceError('UPSTREAM_ERROR', `Base returned order ${o.order_id} for requested ${orderId}`, { connectionId: this.id });
     if (!o) throw new CommerceError('NOT_FOUND', `Base order ${orderId} not found`, { connectionId: this.id });
     return this.toOrder(o, pii);
   }
@@ -213,8 +220,9 @@ export class BaseConnector implements Connector {
 
   async readCurrent(op: WriteOperation, signal?: AbortSignal): Promise<CurrentState> {
     if (op.kind === 'order_note') {
-      const r = await this.call<J>('getOrders', { order_id: Number(op.orderId), get_unconfirmed_orders: true }, false, signal);
+      const r = await this.call<J>('getOrders', { order_id: intId(op.orderId, 'orderId'), get_unconfirmed_orders: true }, false, signal);
       const o = (r.orders ?? [])[0];
+      if (o && String(o.order_id) !== String(op.orderId)) throw new CommerceError('UPSTREAM_ERROR', `Base returned order ${o.order_id} for requested ${op.orderId}`, { connectionId: this.id });
       if (!o) throw new CommerceError('NOT_FOUND', `Base order ${op.orderId} not found`, { connectionId: this.id });
       const cur = String(o.admin_comments ?? '');
       const next = cur ? `${cur}
@@ -230,7 +238,7 @@ ${op.note}` : op.note;
     }
     const inventory = await this.pickInventory(op, signal);
     const id = op.variantId ?? op.productId;
-    const r = await this.call<J>('getInventoryProductsList', { inventory_id: Number(inventory), filter_id: Number(id), include_variants: true }, false, signal);
+    const r = await this.call<J>('getInventoryProductsList', { inventory_id: intId(inventory, 'catalogId'), filter_id: intId(id, 'productId'), include_variants: true }, false, signal);
     const p = (Object.values(r.products ?? {}) as J[]).find((x) => String(x.id) === String(id));
     if (!p) throw new CommerceError('NOT_FOUND', `Product ${id} not found in Base catalog ${inventory}`, { connectionId: this.id });
     if (op.kind === 'stock') {
@@ -251,11 +259,11 @@ ${op.note}` : op.note;
     if (!this.writable) throw new CommerceError('MODE_FORBIDS', `Connection ${this.id} is configured read-only`, { connectionId: this.id });
     if (op.kind === 'order_note') {
       const cur = await this.readCurrent(op, signal);
-      await this.call('setOrderFields', { order_id: Number(op.orderId), admin_comments: cur.noteAfter }, true, signal);
+      await this.call('setOrderFields', { order_id: intId(op.orderId, 'orderId'), admin_comments: cur.noteAfter }, true, signal);
       return { applied: true, detail: `note appended to order ${op.orderId}` };
     }
     if (op.kind === 'order_status') {
-      await this.call('setOrderStatus', { order_id: Number(op.orderId), status_id: Number(op.status) }, true, signal);
+      await this.call('setOrderStatus', { order_id: intId(op.orderId, 'orderId'), status_id: intId(op.status, 'status') }, true, signal);
       return { applied: true, detail: `order ${op.orderId} -> status ${op.status}` };
     }
     const inventory = await this.pickInventory(op, signal);
@@ -263,13 +271,13 @@ ${op.note}` : op.note;
     if (op.kind === 'stock') {
       const cur = await this.readCurrent(op, signal);
       const loc = /in ([a-z]+_\d+)/.exec(cur.description)?.[1] ?? op.locationId;
-      const r = await this.call<J>('updateInventoryProductsStock', { inventory_id: Number(inventory), products: { [id]: { [loc as string]: op.quantity } } }, true, signal);
+      const r = await this.call<J>('updateInventoryProductsStock', { inventory_id: intId(inventory, 'catalogId'), products: { [id]: { [loc as string]: op.quantity } } }, true, signal);
       if (r.warnings && Object.keys(r.warnings).length) throw new CommerceError('VALIDATION_FAILED', `Base warning: ${JSON.stringify(r.warnings)}`, { connectionId: this.id });
       return { applied: (r.counter ?? 0) > 0, detail: `${r.counter} product(s) updated` };
     }
     const cur = await this.readCurrent(op, signal);
     const group = /group (\S+)/.exec(cur.description)?.[1] ?? op.priceGroup;
-    const r = await this.call<J>('updateInventoryProductsPrices', { inventory_id: Number(inventory), products: { [id]: { [group as string]: Number(formatDecimal(parseDecimal(op.amount), 2)) } } }, true, signal);
+    const r = await this.call<J>('updateInventoryProductsPrices', { inventory_id: intId(inventory, 'catalogId'), products: { [id]: { [group as string]: Number(formatDecimal(parseDecimal(op.amount), 2)) } } }, true, signal);
     if (r.warnings && Object.keys(r.warnings).length) throw new CommerceError('VALIDATION_FAILED', `Base warning: ${JSON.stringify(r.warnings)}`, { connectionId: this.id });
     return { applied: (r.counter ?? 0) > 0, detail: `${r.counter} product(s) updated` };
   }

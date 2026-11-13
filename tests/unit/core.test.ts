@@ -201,3 +201,26 @@ describe('duplicate detection', () => {
     expect(markDuplicates([base, o('woocommerce', '55', { total: { amount: '11.00', currency: 'PLN' } })])[0]?.duplicate).toBeUndefined();
   });
 });
+
+describe('approval screen display safety', () => {
+  it('neutralises newlines, ANSI escapes, bidi and zero-width characters in untrusted values', async () => {
+    const { safeDisplay, hasUnsafeChars } = await import('../../src/core/display.js');
+    const evil = 'ok\n  after:  99.99 PLN\u001b[2J\u202Eevil\u200B';
+    const shown = safeDisplay(evil);
+    expect(shown).not.toMatch(/[\n\u001b\u202e\u200b]/);
+    expect(shown).toContain('\\n');
+    expect(shown).toContain('\\x1b');
+    expect(hasUnsafeChars(evil)).toBe(true);
+    expect(hasUnsafeChars('Plain note, ąęł 123')).toBe(false);
+    expect(safeDisplay('x'.repeat(1000)).endsWith('[truncated]')).toBe(true);
+  });
+});
+
+describe('Base ids', () => {
+  it('only plain integers are accepted', async () => {
+    const { intId } = await import('../../src/connectors/baselinker/index.js');
+    expect(intId('12345', 'x')).toBe(12345);
+    for (const bad of ['12abc', '1e3', '-1', '1.5', '', ' 7', '0x10', '1'.repeat(13)]) expect(() => intId(bad, 'x'), bad).toThrow(CommerceError);
+    expect(() => intId(undefined, 'x')).toThrow();
+  });
+});

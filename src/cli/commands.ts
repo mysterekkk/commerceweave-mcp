@@ -3,6 +3,7 @@ import { AllegroConnector } from '../connectors/allegro/index.js';
 import { buildRegistry } from '../connectors/registry.js';
 import { ApprovalStore, confirmCode } from '../core/approvals.js';
 import { loadSettings, type Settings } from '../core/config.js';
+import { safeDisplay as sd } from '../core/display.js';
 import { toCommerceError } from '../core/errors.js';
 import { TokenStore } from '../core/token-store.js';
 import { SERVER_VERSION } from '../server/create-server.js';
@@ -88,7 +89,7 @@ export async function cmdProposals(s: Settings) {
   const store = new ApprovalStore(s.home, s.approvalTtlMs);
   const files = readdirSync(join(s.home, 'proposals')).filter((f) => f.endsWith('.json'));
   if (!files.length) out('(no proposals)');
-  for (const f of files) { const p = store.get(f.replace('.json', '')); out(`${p.id}\t${p.status}\t${p.expiresAt}\t${p.title}`); }
+  for (const f of files) { const p = store.get(f.replace('.json', '')); out(`${p.id}\t${p.status}\t${p.expiresAt}\t${sd(p.title)}`); }
   return 0;
 }
 
@@ -99,9 +100,9 @@ export async function cmdApprove(s: Settings, id: string | undefined) {
   const store = new ApprovalStore(s.home, s.approvalTtlMs);
   const p = store.get(id);
   out(`Proposal ${p.id}  [${p.status}]  expires ${p.expiresAt}`);
-  out(`Connection: ${p.connectionId} (${p.platform})\n${p.title}\n`);
-  for (const c of p.changes) out(`  • ${c.label}\n      before: ${c.beforeDisplay}\n      after:  ${c.afterDisplay}`);
-  if (p.warnings.length) { out('\nWarnings:'); p.warnings.forEach((w) => out('  ! ' + w)); }
+  out(`Connection: ${sd(p.connectionId)} (${p.platform})\n${sd(p.title)}\n`);
+  for (const c of p.changes) out(`  • ${sd(c.label)}\n      before: ${sd(c.beforeDisplay)}\n      after:  ${sd(c.afterDisplay)}`);
+  if (p.warnings.length) { out('\nWarnings:'); p.warnings.forEach((w) => out('  ! ' + sd(w))); }
   const code = confirmCode(p.planHash);
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   const ans = (await rl.question(`\nTo approve exactly this plan type ${code} (anything else cancels): `)).trim().toUpperCase();

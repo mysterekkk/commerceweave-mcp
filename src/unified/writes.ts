@@ -4,17 +4,10 @@ import type { Connector, CurrentState, WriteOperation } from '../connectors/type
 import type { Mode } from '../core/config.js';
 import { CommerceError, toCommerceError } from '../core/errors.js';
 import { applyPercent, formatDecimal, normalizeMoney, parseDecimal, roundDecimal } from '../core/money.js';
+import { hasUnsafeChars } from '../core/display.js';
 import { log } from '../core/logging.js';
 
 export const MAX_OPS_PER_PROPOSAL = 25;
-
-function hasControlChars(s: string): boolean {
-  for (const ch of s) {
-    const c = ch.codePointAt(0) as number;
-    if ((c < 32 && c !== 9 && c !== 10) || c === 127) return true;
-  }
-  return false;
-}
 
 /** Numeric-aware comparison so "39.9" equals "39.90"; falls back to exact string equality. */
 export function sameValue(a: string, b: string): boolean {
@@ -115,7 +108,7 @@ export class Writes {
   async prepareOrderNote(connectionId: string, orderId: string, note: string, signal?: AbortSignal) {
     const c = this.reg.get(connectionId);
     this.guard(c, 1);
-    if (!note.trim() || note.length > 190 || hasControlChars(note)) throw new CommerceError('VALIDATION_FAILED', 'Note must be 1..190 characters of plain text.');
+    if (!note.trim() || note.length > 190 || hasUnsafeChars(note)) throw new CommerceError('VALIDATION_FAILED', 'Note must be 1..190 characters of plain text.');
     const op: WriteOperation = { kind: 'order_note', orderId, note: note.trim() };
     const before = await c.readCurrent(op, signal);
     const after = before.noteAfter as string;

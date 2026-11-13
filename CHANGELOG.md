@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- Approval screen escapes control, ANSI, bidi and zero-width characters in all untrusted values; notes may not contain line breaks or control characters.
+- Base.com ids are validated as plain integers and the returned order id is checked against the requested one before any read-modify-write.
+
 ## 0.1.1
 
 - WooCommerce connections are now DNS-pinned (undici agent): the validated address is the connected address, closing the DNS-rebinding window.
