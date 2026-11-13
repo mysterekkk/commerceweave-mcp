@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.mysterekkk/commerceweave-mcp",
   "title": "CommerceWeave MCP",
-  "description": "One local MCP server for Allegro, Base.com and WooCommerce: read-only by default, human-approved writes.",
+  "description": "Local MCP server for Allegro, Base.com and WooCommerce. Read-only by default, human-approved writes.",
   "websiteUrl": "https://github.com/mysterekkk/commerceweave-mcp",
   "repository": { "url": "https://github.com/mysterekkk/commerceweave-mcp", "source": "github" },
   "version": "0.1.2",

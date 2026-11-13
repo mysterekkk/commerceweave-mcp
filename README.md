@@ -2,6 +2,7 @@
 
 <p align="center">
   <a href="https://github.com/mysterekkk/commerceweave-mcp/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/mysterekkk/commerceweave-mcp/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://www.npmjs.com/package/commerceweave-mcp"><img alt="npm" src="https://img.shields.io/npm/v/commerceweave-mcp"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-2dd4bf"></a>
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178c6">
   <img alt="Node.js" src="https://img.shields.io/badge/node-%E2%89%A522-5fa04e">
@@ -50,7 +51,7 @@ Requires Node.js 22+.
 claude mcp add commerceweave-demo -e COMMERCEWEAVE_DEMO=true -- npx -y commerceweave-mcp
 ```
 
-Not on npm yet? From a clone: `npm ci && npm run build`, then `claude mcp add commerceweave-demo -e COMMERCEWEAVE_DEMO=true -- node /absolute/path/to/commerceweave-mcp/dist/index.js`.
+From a clone instead: `npm ci && npm run build`, then `claude mcp add commerceweave-demo -e COMMERCEWEAVE_DEMO=true -- node /absolute/path/to/commerceweave-mcp/dist/index.js`.
 
 **2. Connect your stores.** Put credentials in environment variables or a config file with `env:NAME` references, never in a command line (shell history). Per-platform steps: [docs/setup.md](docs/setup.md).
 

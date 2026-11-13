@@ -7,7 +7,7 @@ npm ci && npm run build
 claude mcp add commerceweave-demo -e COMMERCEWEAVE_DEMO=true -- node /absolute/path/to/commerceweave-mcp/dist/index.js
 ```
 
-After the package is published to npm:
+With the published npm package:
 
 ```bash
 claude mcp add commerceweave -- npx -y commerceweave-mcp

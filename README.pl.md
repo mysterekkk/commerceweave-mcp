@@ -2,6 +2,7 @@
 
 <p align="center">
   <a href="https://github.com/mysterekkk/commerceweave-mcp/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/mysterekkk/commerceweave-mcp/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://www.npmjs.com/package/commerceweave-mcp"><img alt="npm" src="https://img.shields.io/npm/v/commerceweave-mcp"></a>
   <a href="LICENSE"><img alt="Licencja: MIT" src="https://img.shields.io/badge/license-MIT-2dd4bf"></a>
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178c6">
   <img alt="Node.js" src="https://img.shields.io/badge/node-%E2%89%A522-5fa04e">
@@ -50,7 +51,7 @@ Wymagany Node.js 22+.
 claude mcp add commerceweave-demo -e COMMERCEWEAVE_DEMO=true -- npx -y commerceweave-mcp
 ```
 
-Pakietu jeszcze nie ma w npm? Z klona repozytorium: `npm ci && npm run build`, potem `claude mcp add commerceweave-demo -e COMMERCEWEAVE_DEMO=true -- node /bezwzgledna/sciezka/do/commerceweave-mcp/dist/index.js`.
+Albo z klona repozytorium: `npm ci && npm run build`, potem `claude mcp add commerceweave-demo -e COMMERCEWEAVE_DEMO=true -- node /bezwzgledna/sciezka/do/commerceweave-mcp/dist/index.js`.
 
 **2. Podłącz swoje sklepy.** Dane dostępowe trzymaj w zmiennych środowiskowych albo w pliku konfiguracyjnym z odwołaniami `env:NAZWA`, nigdy w poleceniu (historia powłoki). Kroki dla każdej platformy: [docs/setup.md](docs/setup.md).
 
